@@ -164,6 +164,7 @@ class TransactionViewModelTest {
         
         val fakeBudgetDao = object : BudgetDao {
             override fun getBudgetsWithSpent(yearMonth: String): Flow<List<BudgetWithSpent>> = MutableStateFlow(emptyList())
+            override suspend fun getAllBudgets(): List<BudgetEntity> = emptyList()
             override suspend fun insertOrUpdateBudget(budget: BudgetEntity): Long = 0
             override suspend fun deleteBudget(budget: BudgetEntity) {}
         }

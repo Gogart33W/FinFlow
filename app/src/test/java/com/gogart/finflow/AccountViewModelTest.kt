@@ -63,6 +63,8 @@ class AccountViewModelTest {
             override fun getAllTransactionsWithCategory(): Flow<List<TransactionWithCategory>> = MutableStateFlow(emptyList())
             override suspend fun getTransactionCountByCategoryId(categoryId: Long): Int = 0
             override suspend fun getTransactionCountByAccountId(accountId: Long): Int = 0
+            override fun getExpenseSummaryByCategory(startTime: Long, endTime: Long) = MutableStateFlow(emptyList<com.gogart.finflow.data.local.entity.CategoryExpenseSummary>())
+            override fun getPeriodSummary(startTime: Long, endTime: Long) = MutableStateFlow(com.gogart.finflow.data.local.entity.PeriodSummary(0.0, 0.0))
         }
 
         val repository = AccountRepository(fakeAccountDao, fakeTransactionDao)

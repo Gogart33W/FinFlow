@@ -31,6 +31,9 @@ interface BudgetDao {
     )
     fun getBudgetsWithSpent(yearMonth: String): Flow<List<BudgetWithSpent>>
 
+    @Query("SELECT * FROM budgets")
+    suspend fun getAllBudgets(): List<BudgetEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdateBudget(budget: BudgetEntity): Long
 

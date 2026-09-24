@@ -51,6 +51,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.room.common.jvm)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.google.gson)
     testImplementation(libs.junit)
     testImplementation(libs.app.cash.turbine)
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
