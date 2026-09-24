@@ -1,3 +1,19 @@
 <resources>
     <string name="app_name">FinFlow</string>
+    <string name="total_balance">Загальний баланс</string>
+    <string name="incomes">Доходи</string>
+    <string name="expenses">Витрати</string>
+    <string name="all">Всі</string>
+    <string name="transaction_history">Історія операцій (%1$d)</string>
+    <string name="empty_transactions">Операцій поки немає.\nНатисніть +, щоб додати першу транзакцію.</string>
+    <string name="add_transaction">Нова транзакція</string>
+    <string name="expense_btn">🔴 Витрата</string>
+    <string name="income_btn">🟢 Дохід</string>
+    <string name="title_label">Назва (напр. Продукти в Сільпо)</string>
+    <string name="amount_label">Сума (₴)</string>
+    <string name="category_label">Категорія:</string>
+    <string name="cancel">Скасувати</string>
+    <string name="save">Зберегти</string>
+    <string name="delete">Видалити</string>
+    <string name="currency_symbol">₴</string>
 </resources>

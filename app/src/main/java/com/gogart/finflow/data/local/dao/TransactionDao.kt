@@ -5,7 +5,9 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import com.gogart.finflow.data.local.entity.TransactionEntity
+import com.gogart.finflow.data.local.entity.TransactionWithCategory
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -16,6 +18,10 @@ interface TransactionDao {
     @Delete
     suspend fun deleteTransaction(transaction: TransactionEntity)
 
+    @Transaction
     @Query("SELECT * FROM transactions ORDER BY timestamp DESC")
-    fun getAllTransaction(): Flow<List<TransactionEntity>>
+    fun getAllTransactionsWithCategory(): Flow<List<TransactionWithCategory>>
+
+    @Query("SELECT COUNT(*) FROM transactions WHERE categoryId = :categoryId")
+    suspend fun getTransactionCountByCategoryId(categoryId: Long): Int
 }

@@ -1,9 +1,22 @@
 package com.gogart.finflow.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "transactions")
+@Entity(
+    tableName = "transactions",
+    foreignKeys = [
+        ForeignKey(
+            entity = CategoryEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["categoryId"],
+            onDelete = ForeignKey.RESTRICT
+        )
+    ],
+    indices = [Index(value = ["categoryId"])]
+)
 data class TransactionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -11,5 +24,5 @@ data class TransactionEntity(
     val amount: Double,
     val timestamp: Long,
     val isIncome: Boolean,
-    val category: String
+    val categoryId: Long
 )

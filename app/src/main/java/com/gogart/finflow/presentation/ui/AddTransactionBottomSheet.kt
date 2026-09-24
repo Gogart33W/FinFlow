@@ -1,6 +1,8 @@
 package com.gogart.finflow.presentation.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -9,46 +11,60 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-val INCOME_CATEGORIES = listOf("Зарплата", "Фріланс", "Інвестиції", "Подарунок", "Інше")
-val EXPENSE_CATEGORIES = listOf("Продукти", "Транспорт", "Кафе та ресторани", "Розваги", "Комунальні", "Покупки", "Інше")
+import com.gogart.finflow.R
+import com.gogart.finflow.data.local.entity.CategoryEntity
+import com.gogart.finflow.presentation.ui.util.CategoryIconHelper
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddTransactionBottomSheet(
     sheetState: SheetState,
+    categories: List<CategoryEntity>,
     onDismiss: () -> Unit,
-    onSave: (title: String, amount: Double, isIncome: Boolean, category: String) -> Unit
+    onSave: (title: String, amount: Double, isIncome: Boolean, categoryId: Long) -> Unit
 ) {
     var title by remember { mutableStateOf("") }
     var amountText by remember { mutableStateOf("") }
     var isIncome by remember { mutableStateOf(false) }
-    var selectedCategory by remember { mutableStateOf(EXPENSE_CATEGORIES.first()) }
+    var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
     var isError by remember { mutableStateOf(false) }
 
-    val categories = if (isIncome) INCOME_CATEGORIES else EXPENSE_CATEGORIES
+    val filteredCategories = categories.filter { it.isIncome == isIncome }
+
+    LaunchedEffect(isIncome, categories) {
+        if (selectedCategoryId == null || filteredCategories.none { it.id == selectedCategoryId }) {
+            selectedCategoryId = filteredCategories.firstOrNull()?.id
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -60,7 +76,7 @@ fun AddTransactionBottomSheet(
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             Text(
-                text = "Нова транзакція",
+                text = stringResource(R.string.add_transaction),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -76,7 +92,7 @@ fun AddTransactionBottomSheet(
                 Button(
                     onClick = {
                         isIncome = false
-                        selectedCategory = EXPENSE_CATEGORIES.first()
+                        selectedCategoryId = categories.firstOrNull { !it.isIncome }?.id
                     },
                     modifier = Modifier.weight(1f),
                     colors = if (!isIncome) {
@@ -85,13 +101,13 @@ fun AddTransactionBottomSheet(
                         ButtonDefaults.outlinedButtonColors()
                     }
                 ) {
-                    Text("🔴 Витрата", color = if (!isIncome) Color.White else Color.Gray)
+                    Text(stringResource(R.string.expense_btn), color = if (!isIncome) Color.White else Color.Gray)
                 }
 
                 Button(
                     onClick = {
                         isIncome = true
-                        selectedCategory = INCOME_CATEGORIES.first()
+                        selectedCategoryId = categories.firstOrNull { it.isIncome }?.id
                     },
                     modifier = Modifier.weight(1f),
                     colors = if (isIncome) {
@@ -100,7 +116,7 @@ fun AddTransactionBottomSheet(
                         ButtonDefaults.outlinedButtonColors()
                     }
                 ) {
-                    Text("🟢 Дохід", color = if (isIncome) Color.White else Color.Gray)
+                    Text(stringResource(R.string.income_btn), color = if (isIncome) Color.White else Color.Gray)
                 }
             }
 
@@ -111,7 +127,7 @@ fun AddTransactionBottomSheet(
                     title = it
                     isError = false
                 },
-                label = { Text("Назва (напр. Продукти в Сільпо)") },
+                label = { Text(stringResource(R.string.title_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 isError = isError && title.isBlank()
@@ -128,7 +144,7 @@ fun AddTransactionBottomSheet(
                         isError = false
                     }
                 },
-                label = { Text("Сума (₴)") },
+                label = { Text(stringResource(R.string.amount_label)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -138,7 +154,7 @@ fun AddTransactionBottomSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Категорія:",
+                text = stringResource(R.string.category_label),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -149,15 +165,34 @@ fun AddTransactionBottomSheet(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                categories.forEach { category ->
-                    val isSelected = category == selectedCategory
+                filteredCategories.forEach { category ->
+                    val isSelected = category.id == selectedCategoryId
+                    val categoryColor = CategoryIconHelper.parseColorHex(category.colorHex)
+                    val icon = CategoryIconHelper.getIconByName(category.iconName)
+
                     FilterChip(
                         selected = isSelected,
-                        onClick = { selectedCategory = category },
-                        label = { Text(category) },
+                        onClick = { selectedCategoryId = category.id },
+                        label = { Text(category.name) },
+                        leadingIcon = {
+                            Box(
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .clip(CircleShape)
+                                    .background(categoryColor.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = null,
+                                    tint = categoryColor,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                        },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = if (isIncome) Color(0xFFE8F5E9) else Color(0xFFFFEBEE),
-                            selectedLabelColor = if (isIncome) Color(0xFF2E7D32) else Color(0xFFC62828)
+                            selectedContainerColor = categoryColor.copy(alpha = 0.15f),
+                            selectedLabelColor = categoryColor
                         )
                     )
                 }
@@ -174,14 +209,15 @@ fun AddTransactionBottomSheet(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Скасувати")
+                    Text(stringResource(R.string.cancel))
                 }
 
                 Button(
                     onClick = {
                         val amount = amountText.toDoubleOrNull()
-                        if (title.isNotBlank() && amount != null && amount > 0) {
-                            onSave(title.trim(), amount, isIncome, selectedCategory)
+                        val catId = selectedCategoryId
+                        if (title.isNotBlank() && amount != null && amount > 0 && catId != null) {
+                            onSave(title.trim(), amount, isIncome, catId)
                             onDismiss()
                         } else {
                             isError = true
@@ -189,7 +225,7 @@ fun AddTransactionBottomSheet(
                     },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Зберегти")
+                    Text(stringResource(R.string.save))
                 }
             }
 

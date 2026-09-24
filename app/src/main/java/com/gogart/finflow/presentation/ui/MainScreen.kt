@@ -44,25 +44,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gogart.finflow.data.local.entity.TransactionEntity
+import com.gogart.finflow.R
+import com.gogart.finflow.data.local.entity.TransactionWithCategory
+import com.gogart.finflow.presentation.ui.util.CategoryIconHelper
 import com.gogart.finflow.presentation.viewmodel.TransactionViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-enum class TransactionFilter(val label: String) {
-    ALL("Всі"),
-    INCOME("Доходи"),
-    EXPENSE("Витрати")
+enum class TransactionFilter(val stringResId: Int) {
+    ALL(R.string.all),
+    INCOME(R.string.incomes),
+    EXPENSE(R.string.expenses)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(viewModel: TransactionViewModel) {
     val transactions by viewModel.transactions.collectAsState()
+    val categories by viewModel.categories.collectAsState()
     val totalBalance by viewModel.totalBalance.collectAsState()
     val totalIncome by viewModel.totalIncome.collectAsState()
     val totalExpense by viewModel.totalExpense.collectAsState()
@@ -73,8 +77,8 @@ fun MainScreen(viewModel: TransactionViewModel) {
 
     val filteredTransactions = when (filter) {
         TransactionFilter.ALL -> transactions
-        TransactionFilter.INCOME -> transactions.filter { it.isIncome }
-        TransactionFilter.EXPENSE -> transactions.filter { !it.isIncome }
+        TransactionFilter.INCOME -> transactions.filter { it.transaction.isIncome }
+        TransactionFilter.EXPENSE -> transactions.filter { !it.transaction.isIncome }
     }
 
     Scaffold(
@@ -82,7 +86,7 @@ fun MainScreen(viewModel: TransactionViewModel) {
             TopAppBar(
                 title = {
                     Text(
-                        text = "FinFlow",
+                        text = stringResource(R.string.app_name),
                         fontWeight = FontWeight.Bold,
                         fontSize = 22.sp
                     )
@@ -100,7 +104,7 @@ fun MainScreen(viewModel: TransactionViewModel) {
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Додати транзакцію",
+                    contentDescription = stringResource(R.string.add_transaction),
                     tint = Color.White
                 )
             }
@@ -132,7 +136,7 @@ fun MainScreen(viewModel: TransactionViewModel) {
                     FilterChip(
                         selected = filter == item,
                         onClick = { filter = item },
-                        label = { Text(item.label) }
+                        label = { Text(stringResource(item.stringResId)) }
                     )
                 }
             }
@@ -141,7 +145,7 @@ fun MainScreen(viewModel: TransactionViewModel) {
 
             // Transactions Header
             Text(
-                text = "Історія операцій (${filteredTransactions.size})",
+                text = stringResource(R.string.transaction_history, filteredTransactions.size),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(vertical = 8.dp)
@@ -155,7 +159,7 @@ fun MainScreen(viewModel: TransactionViewModel) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Операцій поки немає.\nНатисніть +, щоб додати першу транзакцію.",
+                        text = stringResource(R.string.empty_transactions),
                         color = Color.Gray,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium
@@ -168,11 +172,11 @@ fun MainScreen(viewModel: TransactionViewModel) {
                 ) {
                     items(
                         items = filteredTransactions,
-                        key = { it.id }
+                        key = { it.transaction.id }
                     ) { item ->
                         TransactionItemCard(
-                            transaction = item,
-                            onDelete = { viewModel.deleteTransaction(item) }
+                            item = item,
+                            onDelete = { viewModel.deleteTransaction(item.transaction) }
                         )
                     }
                 }
@@ -182,13 +186,14 @@ fun MainScreen(viewModel: TransactionViewModel) {
         if (showBottomSheet) {
             AddTransactionBottomSheet(
                 sheetState = sheetState,
+                categories = categories,
                 onDismiss = { showBottomSheet = false },
-                onSave = { title, amount, isIncome, category ->
+                onSave = { title, amount, isIncome, categoryId ->
                     viewModel.addTransaction(
                         title = title,
                         amount = amount,
                         isIncome = isIncome,
-                        category = category
+                        categoryId = categoryId
                     )
                 }
             )
@@ -212,7 +217,7 @@ fun BalanceCard(
             modifier = Modifier.padding(20.dp)
         ) {
             Text(
-                text = "Загальний баланс",
+                text = stringResource(R.string.total_balance),
                 fontSize = 14.sp,
                 color = Color.Gray
             )
@@ -241,14 +246,14 @@ fun BalanceCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.ArrowUpward,
-                            contentDescription = "Доходи",
+                            contentDescription = stringResource(R.string.incomes),
                             tint = Color(0xFF2E7D32),
                             modifier = Modifier.size(20.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
-                        Text("Доходи", fontSize = 12.sp, color = Color.Gray)
+                        Text(stringResource(R.string.incomes), fontSize = 12.sp, color = Color.Gray)
                         Text(
                             text = String.format(Locale.getDefault(), "+%.2f ₴", totalIncome),
                             fontSize = 15.sp,
@@ -269,14 +274,14 @@ fun BalanceCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.ArrowDownward,
-                            contentDescription = "Витрати",
+                            contentDescription = stringResource(R.string.expenses),
                             tint = Color(0xFFC62828),
                             modifier = Modifier.size(20.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
-                        Text("Витрати", fontSize = 12.sp, color = Color.Gray)
+                        Text(stringResource(R.string.expenses), fontSize = 12.sp, color = Color.Gray)
                         Text(
                             text = String.format(Locale.getDefault(), "-%.2f ₴", totalExpense),
                             fontSize = 15.sp,
@@ -292,9 +297,14 @@ fun BalanceCard(
 
 @Composable
 fun TransactionItemCard(
-    transaction: TransactionEntity,
+    item: TransactionWithCategory,
     onDelete: () -> Unit
 ) {
+    val transaction = item.transaction
+    val category = item.category
+    val categoryColor = CategoryIconHelper.parseColorHex(category.colorHex)
+    val categoryIcon = CategoryIconHelper.getIconByName(category.iconName)
+
     val dateFormat = remember { SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()) }
     val formattedDate = dateFormat.format(Date(transaction.timestamp))
 
@@ -314,13 +324,14 @@ fun TransactionItemCard(
                 modifier = Modifier
                     .size(42.dp)
                     .clip(CircleShape)
-                    .background(if (transaction.isIncome) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)),
+                    .background(categoryColor.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = if (transaction.isIncome) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
-                    contentDescription = null,
-                    tint = if (transaction.isIncome) Color(0xFF2E7D32) else Color(0xFFC62828)
+                    imageVector = categoryIcon,
+                    contentDescription = category.name,
+                    tint = categoryColor,
+                    modifier = Modifier.size(22.dp)
                 )
             }
 
@@ -333,7 +344,7 @@ fun TransactionItemCard(
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "${transaction.category} • $formattedDate",
+                    text = "${category.name} • $formattedDate",
                     fontSize = 12.sp,
                     color = Color.Gray
                 )
@@ -354,7 +365,7 @@ fun TransactionItemCard(
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Видалити",
+                    contentDescription = stringResource(R.string.delete),
                     tint = Color.Gray
                 )
             }

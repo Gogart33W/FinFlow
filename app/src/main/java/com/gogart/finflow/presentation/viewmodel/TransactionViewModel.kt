@@ -3,7 +3,10 @@ package com.gogart.finflow.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.gogart.finflow.data.local.entity.CategoryEntity
 import com.gogart.finflow.data.local.entity.TransactionEntity
+import com.gogart.finflow.data.local.entity.TransactionWithCategory
+import com.gogart.finflow.data.repository.CategoryRepository
 import com.gogart.finflow.data.repository.TransactionRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -11,17 +14,29 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class TransactionViewModel(private val repository: TransactionRepository) : ViewModel() {
+class TransactionViewModel(
+    private val transactionRepository: TransactionRepository,
+    private val categoryRepository: CategoryRepository
+) : ViewModel() {
 
-    val transactions: StateFlow<List<TransactionEntity>> = repository.getAllTransactions()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    val transactions: StateFlow<List<TransactionWithCategory>> =
+        transactionRepository.getAllTransactionsWithCategory()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
+
+    val categories: StateFlow<List<CategoryEntity>> =
+        categoryRepository.getAllCategories()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
 
     val totalIncome: StateFlow<Double> = transactions.map { list ->
-        list.filter { it.isIncome }.sumOf { it.amount }
+        list.filter { it.transaction.isIncome }.sumOf { it.transaction.amount }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -29,7 +44,7 @@ class TransactionViewModel(private val repository: TransactionRepository) : View
     )
 
     val totalExpense: StateFlow<Double> = transactions.map { list ->
-        list.filter { !it.isIncome }.sumOf { it.amount }
+        list.filter { !it.transaction.isIncome }.sumOf { it.transaction.amount }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -37,8 +52,8 @@ class TransactionViewModel(private val repository: TransactionRepository) : View
     )
 
     val totalBalance: StateFlow<Double> = transactions.map { list ->
-        val income = list.filter { it.isIncome }.sumOf { it.amount }
-        val expense = list.filter { !it.isIncome }.sumOf { it.amount }
+        val income = list.filter { it.transaction.isIncome }.sumOf { it.transaction.amount }
+        val expense = list.filter { !it.transaction.isIncome }.sumOf { it.transaction.amount }
         income - expense
     }.stateIn(
         scope = viewModelScope,
@@ -50,7 +65,7 @@ class TransactionViewModel(private val repository: TransactionRepository) : View
         title: String,
         amount: Double,
         isIncome: Boolean,
-        category: String
+        categoryId: Long
     ) {
         viewModelScope.launch {
             val entity = TransactionEntity(
@@ -58,25 +73,27 @@ class TransactionViewModel(private val repository: TransactionRepository) : View
                 amount = amount,
                 timestamp = System.currentTimeMillis(),
                 isIncome = isIncome,
-                category = category
+                categoryId = categoryId
             )
-            repository.insert(entity)
+            transactionRepository.insert(entity)
         }
     }
 
     fun deleteTransaction(transaction: TransactionEntity) {
         viewModelScope.launch {
-            repository.delete(transaction)
+            transactionRepository.delete(transaction)
         }
     }
 }
 
-class TransactionViewModelFactory(private val repository: TransactionRepository) :
-    ViewModelProvider.Factory {
+class TransactionViewModelFactory(
+    private val transactionRepository: TransactionRepository,
+    private val categoryRepository: CategoryRepository
+) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(TransactionViewModel::class.java)) {
-            return TransactionViewModel(repository) as T
+            return TransactionViewModel(transactionRepository, categoryRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
