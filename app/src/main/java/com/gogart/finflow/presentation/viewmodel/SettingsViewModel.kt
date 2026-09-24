@@ -96,9 +96,9 @@ class SettingsViewModel(
             securityManager.setPin(pin)
             if (pin == null) {
                 _isAuthenticated.value = true
-                _messageEvent.emit("PIN-код успішно видалено")
+                _messageEvent.emit("pin_removed")
             } else {
-                _messageEvent.emit("PIN-код успішно встановлено")
+                _messageEvent.emit("pin_saved")
             }
         }
     }
@@ -112,7 +112,7 @@ class SettingsViewModel(
                 },
                 onError = {
                     viewModelScope.launch {
-                        _messageEvent.emit("Невірний PIN-код")
+                        _messageEvent.emit("invalid_pin")
                     }
                 }
             )
@@ -122,7 +122,7 @@ class SettingsViewModel(
     fun exportData(uri: Uri) {
         viewModelScope.launch {
             val success = backupManager.exportData(uri)
-            val msg = if (success) "Дані успішно експортовано" else "Помилка при експорті"
+            val msg = if (success) "export_success" else "export_error"
             _messageEvent.emit(msg)
         }
     }
@@ -133,7 +133,7 @@ class SettingsViewModel(
             if (data != null) {
                 _backupDataPreview.value = data
             } else {
-                _messageEvent.emit("Помилка зчитування файлу бекапу")
+                _messageEvent.emit("import_read_error")
             }
         }
     }
@@ -143,7 +143,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             val success = backupManager.executeImport(data)
             _backupDataPreview.value = null
-            val msg = if (success) "Дані успішно імпортовано" else "Помилка при імпорті"
+            val msg = if (success) "import_success" else "import_error"
             _messageEvent.emit(msg)
         }
     }

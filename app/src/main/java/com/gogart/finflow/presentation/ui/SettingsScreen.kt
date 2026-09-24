@@ -3,6 +3,7 @@ package com.gogart.finflow.presentation.ui
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
@@ -52,12 +54,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.os.LocaleListCompat
 import com.gogart.finflow.R
 import com.gogart.finflow.data.backup.BackupData
 import com.gogart.finflow.presentation.viewmodel.SettingsViewModel
@@ -71,11 +75,20 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
     val isDynamicColorEnabled by viewModel.isDynamicColorEnabled.collectAsState()
     val backupPreview by viewModel.backupDataPreview.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-
     var showPinDialog by remember { mutableStateOf(false) }
-
     LaunchedEffect(Unit) {
-        viewModel.messageEvent.collect { message ->
+        viewModel.messageEvent.collect { msgKey ->
+            val message = when (msgKey) {
+                "pin_removed" -> "PIN-код успішно видалено"
+                "pin_saved" -> "PIN-код успішно встановлено"
+                "invalid_pin" -> "Невірний PIN-код"
+                "export_success" -> "Дані успішно експортовано"
+                "export_error" -> "Помилка при експорті"
+                "import_success" -> "Дані успішно імпортовано"
+                "import_error" -> "Помилка при імпорті"
+                "import_read_error" -> "Помилка зчитування файлу бекапу"
+                else -> msgKey
+            }
             snackbarHostState.showSnackbar(message)
         }
     }
@@ -120,7 +133,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         ) {
             // Appearance Section
             Text(
-                text = "Вигляд",
+                text = stringResource(R.string.theme_label),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -132,6 +145,55 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    
+                    // Language Switcher
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Language,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.Gray
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = stringResource(R.string.language_label),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    val currentLocales = AppCompatDelegate.getApplicationLocales()
+                    val currentLanguage = currentLocales.toLanguageTags().let { 
+                        if (it.contains("uk")) 0 else 1 
+                    }
+
+                    SingleChoiceSegmentedButtonRow(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        SegmentedButton(
+                            selected = currentLanguage == 0,
+                            onClick = {
+                                AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("uk"))
+                            },
+                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                        ) {
+                            Text("Українська")
+                        }
+                        SegmentedButton(
+                            selected = currentLanguage == 1,
+                            onClick = {
+                                AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("en"))
+                            },
+                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                        ) {
+                            Text("English")
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.DarkMode,
@@ -141,7 +203,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
-                            text = "Тема оформлення",
+                            text = stringResource(R.string.theme_label),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -149,7 +211,10 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    val themeOptions = listOf("Системна", "Світла", "Темна")
+                    val sysStr = stringResource(R.string.theme_system)
+                    val lightStr = stringResource(R.string.theme_light)
+                    val darkStr = stringResource(R.string.theme_dark)
+                    val themeOptions = listOf(sysStr, lightStr, darkStr)
                     val selectedIndex = when (themeMode) {
                         ThemeMode.SYSTEM -> 0
                         ThemeMode.LIGHT -> 1
@@ -194,12 +259,12 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                             Spacer(modifier = Modifier.width(16.dp))
                             Column {
                                 Text(
-                                    text = "Кольори від шпалер",
+                                    text = stringResource(R.string.dynamic_color_label),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
-                                    text = "Тільки на Android 12+",
+                                    text = stringResource(R.string.dynamic_color_desc),
                                     fontSize = 12.sp,
                                     color = Color.Gray
                                 )
@@ -218,7 +283,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 
             // Security Section
             Text(
-                text = "Безпека",
+                text = stringResource(R.string.security_title),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -246,19 +311,19 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text(
-                                text = "PIN-код входу",
+                                text = stringResource(R.string.pin_label),
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text = if (isPinSet) "Встановлено" else "Не встановлено",
+                                text = stringResource(if (isPinSet) R.string.pin_set else R.string.pin_not_set),
                                 fontSize = 14.sp,
                                 color = if (isPinSet) Color(0xFF388E3C) else Color.Gray
                             )
                         }
                     }
                     Button(onClick = { showPinDialog = true }) {
-                        Text(if (isPinSet) "Змінити" else "Встановити")
+                        Text(stringResource(if (isPinSet) R.string.pin_change else R.string.pin_setup))
                     }
                 }
             }
@@ -267,7 +332,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 
             // Data Section
             Text(
-                text = "Дані (Резервне копіювання)",
+                text = stringResource(R.string.backup_title),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -285,7 +350,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     ) {
                         Icon(Icons.Default.Upload, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Експортувати дані")
+                        Text(stringResource(R.string.export_data))
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -296,18 +361,18 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     ) {
                         Icon(Icons.Default.Download, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Імпортувати дані")
+                        Text(stringResource(R.string.import_data))
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Увага: Імпорт об'єднає існуючі записи з новими.",
+                        text = stringResource(R.string.import_warning),
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(32.dp)) // padding at bottom
+            Spacer(modifier = Modifier.height(32.dp))
         }
 
         if (showPinDialog) {
@@ -344,25 +409,25 @@ fun ImportConfirmDialog(
 ) {
     AlertDialog(
         onDismissRequest = onCancel,
-        title = { Text("Підтвердження імпорту") },
+        title = { Text(stringResource(R.string.import_confirm_title)) },
         text = {
             Column {
-                Text("Знайдено дані у файлі:")
+                Text(stringResource(R.string.import_confirm_desc))
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("• ${backupData.accounts.size} рахунків")
-                Text("• ${backupData.categories.size} категорій")
-                Text("• ${backupData.transactions.size} транзакцій")
-                Text("• ${backupData.budgets.size} бюджетів")
+                Text(stringResource(R.string.import_confirm_accounts, backupData.accounts.size))
+                Text(stringResource(R.string.import_confirm_categories, backupData.categories.size))
+                Text(stringResource(R.string.import_confirm_transactions, backupData.transactions.size))
+                Text(stringResource(R.string.import_confirm_budgets, backupData.budgets.size))
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Існуючі дані будуть доповнені новими. Ви впевнені, що хочете продовжити?",
+                    text = stringResource(R.string.import_confirm_warning),
                     fontWeight = FontWeight.Bold
                 )
             }
         },
         confirmButton = {
             Button(onClick = onConfirm) {
-                Text("Імпортувати")
+                Text(stringResource(R.string.import_btn))
             }
         },
         dismissButton = {
@@ -384,10 +449,10 @@ fun SetPinDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Налаштування PIN-коду") },
+        title = { Text(stringResource(R.string.security_title)) },
         text = {
             Column {
-                Text("Введіть 4 цифри для захисту додатку.")
+                Text(stringResource(R.string.pin_setup_desc))
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = pin,
@@ -401,7 +466,7 @@ fun SetPinDialog(
                     visualTransformation = PasswordVisualTransformation(),
                     singleLine = true,
                     isError = isError,
-                    label = { Text("PIN-код") }
+                    label = { Text(stringResource(R.string.pin_label)) }
                 )
             }
         },
@@ -415,17 +480,17 @@ fun SetPinDialog(
                     }
                 }
             ) {
-                Text("Зберегти")
+                Text(stringResource(R.string.save))
             }
         },
         dismissButton = {
             if (onRemove != null) {
                 TextButton(onClick = onRemove) {
-                    Text("Видалити PIN", color = Color(0xFFD32F2F))
+                    Text(stringResource(R.string.remove_pin), color = Color(0xFFD32F2F))
                 }
             } else {
                 TextButton(onClick = onDismiss) {
-                    Text("Скасувати")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         }

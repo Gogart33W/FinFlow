@@ -44,6 +44,25 @@
     <string name="budget_warning">Наближення до ліміту (понад 70%)</string>
     <string name="no_budgets_set">Бюджети для категорій ще не встановлено.</string>
 
+    <!-- Settings & App State -->
+    <string name="language_label">Мова додатку</string>
+    <string name="theme_label">Тема оформлення</string>
+    <string name="theme_system">Системна</string>
+    <string name="theme_light">Світла</string>
+    <string name="theme_dark">Темна</string>
+    <string name="dynamic_color_label">Кольори від шпалер</string>
+    <string name="dynamic_color_desc">Тільки на Android 12+</string>
+    <string name="security_title">Безпека</string>
+    <string name="pin_label">PIN-код входу</string>
+    <string name="pin_set">Встановлено</string>
+    <string name="pin_not_set">Не встановлено</string>
+    <string name="pin_change">Змінити</string>
+    <string name="pin_setup">Встановити</string>
+    <string name="backup_title">Дані (Резервне копіювання)</string>
+    <string name="export_data">Експортувати дані</string>
+    <string name="import_data">Імпортувати дані</string>
+    <string name="import_warning">Увага: Імпорт об\'єднає існуючі записи з новими.</string>
+
     <!-- Onboarding -->
     <string name="onboarding_title_1">Відстежуй витрати легко</string>
     <string name="onboarding_desc_1">Контролюй куди йдуть твої гроші. Додавай доходи та витрати всього у пару кліків.</string>
@@ -54,4 +73,30 @@
     <string name="onboarding_skip">Пропустити</string>
     <string name="onboarding_next">Далі</string>
     <string name="onboarding_start">Почати</string>
+
+    <string name="empty_expense_summary">За обраний період витрат не знайдено.</string>
+    <string name="expense_structure_title">Структура витрат за категоріями</string>
+    <string name="total_expense_label">Всього витрат</string>
+    <string name="budget_limit_label">Ліміт</string>
+    <string name="budget_spent_label">Витрачено</string>
+
+    <string name="enter_pin">Введіть PIN-код для входу</string>
+    <string name="pin_setup_desc">Введіть 4 цифри для захисту додатку.</string>
+    <string name="invalid_pin">Невірний PIN-код</string>
+    <string name="pin_removed">PIN-код успішно видалено</string>
+    <string name="pin_saved">PIN-код успішно встановлено</string>
+    <string name="export_success">Дані успішно експортовано</string>
+    <string name="export_error">Помилка при експорті</string>
+    <string name="import_success">Дані успішно імпортовано</string>
+    <string name="import_error">Помилка при імпорті</string>
+    <string name="import_read_error">Помилка зчитування файлу бекапу</string>
+    <string name="import_confirm_title">Підтвердження імпорту</string>
+    <string name="import_confirm_desc">Знайдено дані у файлі:</string>
+    <string name="import_confirm_accounts">• %1$d рахунків</string>
+    <string name="import_confirm_categories">• %1$d категорій</string>
+    <string name="import_confirm_transactions">• %1$d транзакцій</string>
+    <string name="import_confirm_budgets">• %1$d бюджетів</string>
+    <string name="import_confirm_warning">Існуючі дані будуть доповнені новими. Ви впевнені, що хочете продовжити?</string>
+    <string name="import_btn">Імпортувати</string>
+    <string name="remove_pin">Видалити PIN</string>
 </resources>
