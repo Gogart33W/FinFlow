@@ -12,8 +12,21 @@
     <string name="title_label">Назва (напр. Продукти в Сільпо)</string>
     <string name="amount_label">Сума (₴)</string>
     <string name="category_label">Категорія:</string>
+    <string name="account_label">Рахунок:</string>
     <string name="cancel">Скасувати</string>
     <string name="save">Зберегти</string>
     <string name="delete">Видалити</string>
     <string name="currency_symbol">₴</string>
+
+    <!-- Navigation & Accounts -->
+    <string name="nav_home">Головна</string>
+    <string name="nav_accounts">Рахунки</string>
+    <string name="accounts_title">Мої рахунки</string>
+    <string name="add_account">Новий рахунок</string>
+    <string name="account_name_label">Назва рахунку (напр. Картка Monobank)</string>
+    <string name="account_type_label">Тип рахунку</string>
+    <string name="initial_balance_label">Початковий баланс (₴)</string>
+    <string name="cannot_delete_account_title">Неможливо видалити рахунок</string>
+    <string name="cannot_delete_account_msg">На цьому рахунку є прив\'язані транзакції. Видаліть або перенісіть спочатку транзакції, щоб видалити рахунок.</string>
+    <string name="ok">OK</string>
 </resources>

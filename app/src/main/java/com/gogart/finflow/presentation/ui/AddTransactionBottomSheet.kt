@@ -41,6 +41,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gogart.finflow.R
+import com.gogart.finflow.data.local.entity.AccountEntity
 import com.gogart.finflow.data.local.entity.CategoryEntity
 import com.gogart.finflow.presentation.ui.util.CategoryIconHelper
 
@@ -49,13 +50,15 @@ import com.gogart.finflow.presentation.ui.util.CategoryIconHelper
 fun AddTransactionBottomSheet(
     sheetState: SheetState,
     categories: List<CategoryEntity>,
+    accounts: List<AccountEntity>,
     onDismiss: () -> Unit,
-    onSave: (title: String, amount: Double, isIncome: Boolean, categoryId: Long) -> Unit
+    onSave: (title: String, amount: Double, isIncome: Boolean, categoryId: Long, accountId: Long) -> Unit
 ) {
     var title by remember { mutableStateOf("") }
     var amountText by remember { mutableStateOf("") }
     var isIncome by remember { mutableStateOf(false) }
     var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
+    var selectedAccountId by remember { mutableStateOf<Long?>(null) }
     var isError by remember { mutableStateOf(false) }
 
     val filteredCategories = categories.filter { it.isIncome == isIncome }
@@ -63,6 +66,12 @@ fun AddTransactionBottomSheet(
     LaunchedEffect(isIncome, categories) {
         if (selectedCategoryId == null || filteredCategories.none { it.id == selectedCategoryId }) {
             selectedCategoryId = filteredCategories.firstOrNull()?.id
+        }
+    }
+
+    LaunchedEffect(accounts) {
+        if (selectedAccountId == null) {
+            selectedAccountId = accounts.firstOrNull { it.isDefault }?.id ?: accounts.firstOrNull()?.id
         }
     }
 
@@ -154,6 +163,36 @@ fun AddTransactionBottomSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
+                text = stringResource(R.string.account_label),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                accounts.forEach { account ->
+                    val isSelected = account.id == selectedAccountId
+                    val accountColor = CategoryIconHelper.parseColorHex(account.colorHex)
+
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { selectedAccountId = account.id },
+                        label = { Text(account.name) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = accountColor.copy(alpha = 0.15f),
+                            selectedLabelColor = accountColor
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
                 text = stringResource(R.string.category_label),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
@@ -216,8 +255,9 @@ fun AddTransactionBottomSheet(
                     onClick = {
                         val amount = amountText.toDoubleOrNull()
                         val catId = selectedCategoryId
-                        if (title.isNotBlank() && amount != null && amount > 0 && catId != null) {
-                            onSave(title.trim(), amount, isIncome, catId)
+                        val accId = selectedAccountId
+                        if (title.isNotBlank() && amount != null && amount > 0 && catId != null && accId != null) {
+                            onSave(title.trim(), amount, isIncome, catId, accId)
                             onDismiss()
                         } else {
                             isError = true

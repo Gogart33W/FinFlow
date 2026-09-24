@@ -3,9 +3,11 @@ package com.gogart.finflow.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.gogart.finflow.data.local.entity.AccountEntity
 import com.gogart.finflow.data.local.entity.CategoryEntity
 import com.gogart.finflow.data.local.entity.TransactionEntity
 import com.gogart.finflow.data.local.entity.TransactionWithCategory
+import com.gogart.finflow.data.repository.AccountRepository
 import com.gogart.finflow.data.repository.CategoryRepository
 import com.gogart.finflow.data.repository.TransactionRepository
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,7 +18,8 @@ import kotlinx.coroutines.launch
 
 class TransactionViewModel(
     private val transactionRepository: TransactionRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val accountRepository: AccountRepository
 ) : ViewModel() {
 
     val transactions: StateFlow<List<TransactionWithCategory>> =
@@ -29,6 +32,14 @@ class TransactionViewModel(
 
     val categories: StateFlow<List<CategoryEntity>> =
         categoryRepository.getAllCategories()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
+
+    val accounts: StateFlow<List<AccountEntity>> =
+        accountRepository.getAllAccounts()
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
@@ -65,7 +76,8 @@ class TransactionViewModel(
         title: String,
         amount: Double,
         isIncome: Boolean,
-        categoryId: Long
+        categoryId: Long,
+        accountId: Long
     ) {
         viewModelScope.launch {
             val entity = TransactionEntity(
@@ -73,7 +85,8 @@ class TransactionViewModel(
                 amount = amount,
                 timestamp = System.currentTimeMillis(),
                 isIncome = isIncome,
-                categoryId = categoryId
+                categoryId = categoryId,
+                accountId = accountId
             )
             transactionRepository.insert(entity)
         }
@@ -88,12 +101,17 @@ class TransactionViewModel(
 
 class TransactionViewModelFactory(
     private val transactionRepository: TransactionRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val accountRepository: AccountRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(TransactionViewModel::class.java)) {
-            return TransactionViewModel(transactionRepository, categoryRepository) as T
+            return TransactionViewModel(
+                transactionRepository,
+                categoryRepository,
+                accountRepository
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

@@ -1,10 +1,14 @@
 package com.gogart.finflow
 
+import com.gogart.finflow.data.local.dao.AccountDao
 import com.gogart.finflow.data.local.dao.CategoryDao
 import com.gogart.finflow.data.local.dao.TransactionDao
+import com.gogart.finflow.data.local.entity.AccountEntity
+import com.gogart.finflow.data.local.entity.AccountWithBalance
 import com.gogart.finflow.data.local.entity.CategoryEntity
 import com.gogart.finflow.data.local.entity.TransactionEntity
 import com.gogart.finflow.data.local.entity.TransactionWithCategory
+import com.gogart.finflow.data.repository.AccountRepository
 import com.gogart.finflow.data.repository.CategoryRepository
 import com.gogart.finflow.data.repository.TransactionRepository
 import com.gogart.finflow.presentation.viewmodel.TransactionViewModel
@@ -55,6 +59,7 @@ class TransactionViewModelTest {
             override suspend fun deleteTransaction(transaction: TransactionEntity) {}
             override fun getAllTransactionsWithCategory(): Flow<List<TransactionWithCategory>> = MutableStateFlow(listOf(tx1, tx2))
             override suspend fun getTransactionCountByCategoryId(categoryId: Long): Int = 0
+            override suspend fun getTransactionCountByAccountId(accountId: Long): Int = 0
         }
 
         val fakeCategoryDao = object : CategoryDao {
@@ -67,10 +72,22 @@ class TransactionViewModelTest {
             override suspend fun deleteCategory(category: CategoryEntity) {}
         }
 
+        val fakeAccountDao = object : AccountDao {
+            override fun getAllAccounts(): Flow<List<AccountEntity>> = MutableStateFlow(emptyList())
+            override fun getAllAccountsWithBalance(): Flow<List<AccountWithBalance>> = MutableStateFlow(emptyList())
+            override suspend fun getDefaultAccount(): AccountEntity? = null
+            override suspend fun getAccountById(id: Long): AccountEntity? = null
+            override suspend fun insertAccount(account: AccountEntity): Long = 0
+            override suspend fun insertAccounts(accounts: List<AccountEntity>) {}
+            override suspend fun updateAccount(account: AccountEntity) {}
+            override suspend fun deleteAccount(account: AccountEntity) {}
+        }
+
         val transactionRepository = TransactionRepository(fakeTransactionDao)
         val categoryRepository = CategoryRepository(fakeCategoryDao)
+        val accountRepository = AccountRepository(fakeAccountDao, fakeTransactionDao)
 
-        val viewModel = TransactionViewModel(transactionRepository, categoryRepository)
+        val viewModel = TransactionViewModel(transactionRepository, categoryRepository, accountRepository)
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(1000.0, viewModel.totalIncome.value, 0.01)

@@ -184,16 +184,19 @@ fun MainScreen(viewModel: TransactionViewModel) {
         }
 
         if (showBottomSheet) {
+            val accounts by viewModel.accounts.collectAsState()
             AddTransactionBottomSheet(
                 sheetState = sheetState,
                 categories = categories,
+                accounts = accounts,
                 onDismiss = { showBottomSheet = false },
-                onSave = { title, amount, isIncome, categoryId ->
+                onSave = { title, amount, isIncome, categoryId, accountId ->
                     viewModel.addTransaction(
                         title = title,
                         amount = amount,
                         isIncome = isIncome,
-                        categoryId = categoryId
+                        categoryId = categoryId,
+                        accountId = accountId
                     )
                 }
             )

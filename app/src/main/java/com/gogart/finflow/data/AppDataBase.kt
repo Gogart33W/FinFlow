@@ -6,8 +6,11 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.gogart.finflow.data.local.dao.AccountDao
 import com.gogart.finflow.data.local.dao.CategoryDao
 import com.gogart.finflow.data.local.dao.TransactionDao
+import com.gogart.finflow.data.local.entity.AccountEntity
+import com.gogart.finflow.data.local.entity.AccountType
 import com.gogart.finflow.data.local.entity.CategoryEntity
 import com.gogart.finflow.data.local.entity.TransactionEntity
 import kotlinx.coroutines.CoroutineScope
@@ -15,13 +18,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [TransactionEntity::class, CategoryEntity::class],
-    version = 2,
+    entities = [TransactionEntity::class, CategoryEntity::class, AccountEntity::class],
+    version = 3,
     exportSchema = false
 )
 abstract class AppDataBase : RoomDatabase() {
     abstract val transactionDao: TransactionDao
     abstract val categoryDao: CategoryDao
+    abstract val accountDao: AccountDao
 
     companion object {
         @Volatile
@@ -29,7 +33,6 @@ abstract class AppDataBase : RoomDatabase() {
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // 1. Create categories table
                 db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS `categories` (
@@ -43,7 +46,6 @@ abstract class AppDataBase : RoomDatabase() {
                     """.trimIndent()
                 )
 
-                // 2. Insert default categories
                 db.execSQL("INSERT INTO `categories` (`id`, `name`, `iconName`, `colorHex`, `isIncome`, `isDefault`) VALUES (1, 'Зарплата', 'Work', '#4CAF50', 1, 1)")
                 db.execSQL("INSERT INTO `categories` (`id`, `name`, `iconName`, `colorHex`, `isIncome`, `isDefault`) VALUES (2, 'Фріланс', 'Laptop', '#2196F3', 1, 0)")
                 db.execSQL("INSERT INTO `categories` (`id`, `name`, `iconName`, `colorHex`, `isIncome`, `isDefault`) VALUES (3, 'Інвестиції', 'TrendingUp', '#009688', 1, 0)")
@@ -59,7 +61,6 @@ abstract class AppDataBase : RoomDatabase() {
                 db.execSQL("INSERT INTO `categories` (`id`, `name`, `iconName`, `colorHex`, `isIncome`, `isDefault`) VALUES (12, 'Здоров''я', 'MedicalServices', '#F44336', 0, 0)")
                 db.execSQL("INSERT INTO `categories` (`id`, `name`, `iconName`, `colorHex`, `isIncome`, `isDefault`) VALUES (13, 'Інші витрати', 'MoreHoriz', '#607D8B', 0, 0)")
 
-                // 3. Create new transactions table with categoryId FK
                 db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS `transactions_new` (
@@ -74,7 +75,6 @@ abstract class AppDataBase : RoomDatabase() {
                     """.trimIndent()
                 )
 
-                // 4. Copy old transactions into new table
                 db.execSQL(
                     """
                     INSERT INTO `transactions_new` (`id`, `title`, `amount`, `timestamp`, `isIncome`, `categoryId`)
@@ -84,12 +84,62 @@ abstract class AppDataBase : RoomDatabase() {
                     """.trimIndent()
                 )
 
-                // 5. Drop old table and rename new table
                 db.execSQL("DROP TABLE IF EXISTS `transactions`")
                 db.execSQL("ALTER TABLE `transactions_new` RENAME TO `transactions`")
-
-                // 6. Create index
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_transactions_categoryId` ON `transactions` (`categoryId`)")
+            }
+        }
+
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // 1. Create accounts table
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `accounts` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `type` TEXT NOT NULL,
+                        `initialBalance` REAL NOT NULL,
+                        `colorHex` TEXT NOT NULL,
+                        `isDefault` INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+
+                // 2. Insert default CASH account
+                db.execSQL(
+                    "INSERT INTO `accounts` (`id`, `name`, `type`, `initialBalance`, `colorHex`, `isDefault`) VALUES (1, 'Готівка', 'CASH', 0.0, '#4CAF50', 1)"
+                )
+
+                // 3. Recreate transactions table with accountId FK
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `transactions_new` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `title` TEXT NOT NULL,
+                        `amount` REAL NOT NULL,
+                        `timestamp` INTEGER NOT NULL,
+                        `isIncome` INTEGER NOT NULL,
+                        `categoryId` INTEGER NOT NULL,
+                        `accountId` INTEGER NOT NULL DEFAULT 1,
+                        FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT,
+                        FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT
+                    )
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    INSERT INTO `transactions_new` (`id`, `title`, `amount`, `timestamp`, `isIncome`, `categoryId`, `accountId`)
+                    SELECT `id`, `title`, `amount`, `timestamp`, `isIncome`, `categoryId`, 1
+                    FROM `transactions`
+                    """.trimIndent()
+                )
+
+                db.execSQL("DROP TABLE IF EXISTS `transactions`")
+                db.execSQL("ALTER TABLE `transactions_new` RENAME TO `transactions`")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_transactions_categoryId` ON `transactions` (`categoryId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_transactions_accountId` ON `transactions` (`accountId`)")
             }
         }
 
@@ -110,6 +160,15 @@ abstract class AppDataBase : RoomDatabase() {
             CategoryEntity(name = "Інші витрати", iconName = "MoreHoriz", colorHex = "#607D8B", isIncome = false)
         )
 
+        val DEFAULT_ACCOUNT = AccountEntity(
+            id = 1,
+            name = "Готівка",
+            type = AccountType.CASH,
+            initialBalance = 0.0,
+            colorHex = "#4CAF50",
+            isDefault = true
+        )
+
         fun getDatabase(context: Context): AppDataBase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -117,12 +176,13 @@ abstract class AppDataBase : RoomDatabase() {
                     AppDataBase::class.java,
                     "finflow_database"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .addCallback(object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
                             CoroutineScope(Dispatchers.IO).launch {
                                 INSTANCE?.categoryDao?.insertCategories(DEFAULT_CATEGORIES)
+                                INSTANCE?.accountDao?.insertAccount(DEFAULT_ACCOUNT)
                             }
                         }
                     })
