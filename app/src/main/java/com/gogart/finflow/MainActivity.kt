@@ -24,6 +24,7 @@ import com.gogart.finflow.data.repository.TransactionRepository
 import com.gogart.finflow.presentation.ui.AccountsScreen
 import com.gogart.finflow.presentation.ui.BudgetsScreen
 import com.gogart.finflow.presentation.ui.MainScreen
+import com.gogart.finflow.presentation.ui.OnboardingScreen
 import com.gogart.finflow.presentation.ui.PinAuthScreen
 import com.gogart.finflow.presentation.ui.SettingsScreen
 import com.gogart.finflow.presentation.ui.StatisticsScreen
@@ -85,9 +86,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             FinFlowTheme {
+                val isOnboardingCompleted by settingsViewModel.isOnboardingCompleted.collectAsState()
                 val isAuthenticated by settingsViewModel.isAuthenticated.collectAsState()
 
-                if (!isAuthenticated) {
+                if (!isOnboardingCompleted) {
+                    OnboardingScreen(viewModel = settingsViewModel)
+                } else if (!isAuthenticated) {
                     PinAuthScreen(viewModel = settingsViewModel)
                 } else {
                     MainNavigationApp(

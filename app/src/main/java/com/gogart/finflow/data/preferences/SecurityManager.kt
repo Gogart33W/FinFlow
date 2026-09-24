@@ -15,9 +15,20 @@ class SecurityManager(private val context: Context) {
 
     private val pinKey = stringPreferencesKey("pin_hash")
     private val saltKey = stringPreferencesKey("pin_salt")
+    private val onboardingKey = booleanPreferencesKey("onboarding_completed")
 
     val isPinSet: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[pinKey] != null
+    }
+
+    val isOnboardingCompleted: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[onboardingKey] ?: false
+    }
+
+    suspend fun setOnboardingCompleted() {
+        context.dataStore.edit { preferences ->
+            preferences[onboardingKey] = true
+        }
     }
 
     suspend fun setPin(pin: String?) {

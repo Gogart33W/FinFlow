@@ -11,7 +11,7 @@
     <string name="expense_btn">🔴 Витрата</string>
     <string name="income_btn">🟢 Дохід</string>
     <string name="title_label">Назва (напр. Продукти в Сільпо)</string>
-    <string name="amount_label">Сума (₴)</string>
+    <string name="amount_label">Сума</string>
     <string name="category_label">Категорія:</string>
     <string name="account_label">Рахунок:</string>
     <string name="cancel">Скасувати</string>
@@ -29,7 +29,7 @@
     <string name="add_account">Новий рахунок</string>
     <string name="account_name_label">Назва рахунку (напр. Картка Monobank)</string>
     <string name="account_type_label">Тип рахунку</string>
-    <string name="initial_balance_label">Початковий баланс (₴)</string>
+    <string name="initial_balance_label">Початковий баланс</string>
     <string name="cannot_delete_account_title">Неможливо видалити рахунок</string>
     <string name="cannot_delete_account_msg">На цьому рахунку є прив\'язані транзакції. Видаліть або перенісіть спочатку транзакції, щоб видалити рахунок.</string>
     <string name="delete_confirm_title">Видалити транзакцію?</string>
@@ -39,8 +39,19 @@
     <!-- Budgets -->
     <string name="budgets_title">Місячні бюджети категорій</string>
     <string name="set_budget">Встановити бюджет</string>
-    <string name="monthly_limit_label">Місячний ліміт (₴)</string>
+    <string name="monthly_limit_label">Місячний ліміт</string>
     <string name="budget_exceeded">Перевищено ліміт!</string>
     <string name="budget_warning">Наближення до ліміту (понад 70%)</string>
     <string name="no_budgets_set">Бюджети для категорій ще не встановлено.</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Відстежуй витрати легко</string>
+    <string name="onboarding_desc_1">Контролюй куди йдуть твої гроші. Додавай доходи та витрати всього у пару кліків.</string>
+    <string name="onboarding_title_2">Мульти-рахунки та бюджети</string>
+    <string name="onboarding_desc_2">Створюй рахунки для готівки, карток і заощаджень. Встановлюй місячні бюджети по категоріях.</string>
+    <string name="onboarding_title_3">Повна приватність (Offline-first)</string>
+    <string name="onboarding_desc_3">Ми не збираємо твої дані. Усе зберігається локально на твоєму телефоні. Захисти доступ PIN-кодом.</string>
+    <string name="onboarding_skip">Пропустити</string>
+    <string name="onboarding_next">Далі</string>
+    <string name="onboarding_start">Почати</string>
 </resources>

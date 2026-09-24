@@ -26,6 +26,13 @@ class SettingsViewModel(
             initialValue = false
         )
 
+    val isOnboardingCompleted: StateFlow<Boolean> = securityManager.isOnboardingCompleted
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = true // assume true until loaded to avoid flash
+        )
+
     private val _messageEvent = MutableSharedFlow<String>()
     val messageEvent: SharedFlow<String> = _messageEvent
 
@@ -39,6 +46,12 @@ class SettingsViewModel(
                     _isAuthenticated.value = true
                 }
             }
+        }
+    }
+
+    fun completeOnboarding() {
+        viewModelScope.launch {
+            securityManager.setOnboardingCompleted()
         }
     }
 
