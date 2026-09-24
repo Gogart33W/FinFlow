@@ -1,6 +1,7 @@
 package com.gogart.finflow.presentation.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,10 +33,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -49,6 +56,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gogart.finflow.R
+import com.gogart.finflow.data.local.entity.TransactionEntity
 import com.gogart.finflow.data.local.entity.TransactionWithCategory
 import com.gogart.finflow.presentation.ui.util.CategoryIconHelper
 import com.gogart.finflow.presentation.viewmodel.TransactionViewModel
@@ -67,12 +75,16 @@ enum class TransactionFilter(val stringResId: Int) {
 fun MainScreen(viewModel: TransactionViewModel) {
     val transactions by viewModel.transactions.collectAsState()
     val categories by viewModel.categories.collectAsState()
+    val accounts by viewModel.accounts.collectAsState()
     val totalBalance by viewModel.totalBalance.collectAsState()
     val totalIncome by viewModel.totalIncome.collectAsState()
     val totalExpense by viewModel.totalExpense.collectAsState()
 
     var filter by remember { mutableStateOf(TransactionFilter.ALL) }
     var showBottomSheet by remember { mutableStateOf(false) }
+    var editingTransaction by remember { mutableStateOf<TransactionWithCategory?>(null) }
+    var deletingTransaction by remember { mutableStateOf<TransactionEntity?>(null) }
+
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val filteredTransactions = when (filter) {
@@ -99,7 +111,10 @@ fun MainScreen(viewModel: TransactionViewModel) {
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showBottomSheet = true },
+                onClick = {
+                    editingTransaction = null
+                    showBottomSheet = true
+                },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(
@@ -174,23 +189,72 @@ fun MainScreen(viewModel: TransactionViewModel) {
                         items = filteredTransactions,
                         key = { it.transaction.id }
                     ) { item ->
-                        TransactionItemCard(
-                            item = item,
-                            onDelete = { viewModel.deleteTransaction(item.transaction) }
+                        val dismissState = rememberSwipeToDismissBoxState(
+                            confirmValueChange = { dismissValue ->
+                                when (dismissValue) {
+                                    SwipeToDismissBoxValue.EndToStart -> {
+                                        deletingTransaction = item.transaction
+                                        false
+                                    }
+                                    SwipeToDismissBoxValue.StartToEnd -> {
+                                        editingTransaction = item
+                                        showBottomSheet = true
+                                        false
+                                    }
+                                    SwipeToDismissBoxValue.Settled -> false
+                                }
+                            }
                         )
+
+                        SwipeToDismissBox(
+                            state = dismissState,
+                            backgroundContent = {
+                                val color = when (dismissState.dismissDirection) {
+                                    SwipeToDismissBoxValue.EndToStart -> Color(0xFFE53935)
+                                    SwipeToDismissBoxValue.StartToEnd -> Color(0xFF2196F3)
+                                    else -> Color.Transparent
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(color)
+                                        .padding(horizontal = 20.dp),
+                                    contentAlignment = if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) Alignment.CenterEnd else Alignment.CenterStart
+                                ) {
+                                    if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+                                        Icon(Icons.Default.Delete, contentDescription = null, tint = Color.White)
+                                    } else if (dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) {
+                                        Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White)
+                                    }
+                                }
+                            }
+                        ) {
+                            TransactionItemCard(
+                                item = item,
+                                onClick = {
+                                    editingTransaction = item
+                                    showBottomSheet = true
+                                },
+                                onDelete = { deletingTransaction = item.transaction }
+                            )
+                        }
                     }
                 }
             }
         }
 
         if (showBottomSheet) {
-            val accounts by viewModel.accounts.collectAsState()
             AddTransactionBottomSheet(
                 sheetState = sheetState,
                 categories = categories,
                 accounts = accounts,
-                onDismiss = { showBottomSheet = false },
-                onSave = { title, amount, isIncome, categoryId, accountId ->
+                existingTransaction = editingTransaction,
+                onDismiss = {
+                    showBottomSheet = false
+                    editingTransaction = null
+                },
+                onSaveNew = { title, amount, isIncome, categoryId, accountId ->
                     viewModel.addTransaction(
                         title = title,
                         amount = amount,
@@ -198,6 +262,32 @@ fun MainScreen(viewModel: TransactionViewModel) {
                         categoryId = categoryId,
                         accountId = accountId
                     )
+                },
+                onSaveExisting = { updated ->
+                    viewModel.updateTransaction(updated)
+                }
+            )
+        }
+
+        deletingTransaction?.let { tx ->
+            AlertDialog(
+                onDismissRequest = { deletingTransaction = null },
+                title = { Text(stringResource(R.string.delete_confirm_title)) },
+                text = { Text(stringResource(R.string.delete_confirm_msg, tx.title)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.deleteTransaction(tx)
+                            deletingTransaction = null
+                        }
+                    ) {
+                        Text(stringResource(R.string.delete), color = Color(0xFFC62828))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { deletingTransaction = null }) {
+                        Text(stringResource(R.string.cancel))
+                    }
                 }
             )
         }
@@ -301,6 +391,7 @@ fun BalanceCard(
 @Composable
 fun TransactionItemCard(
     item: TransactionWithCategory,
+    onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
     val transaction = item.transaction
@@ -312,7 +403,9 @@ fun TransactionItemCard(
     val formattedDate = dateFormat.format(Date(transaction.timestamp))
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)

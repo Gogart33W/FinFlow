@@ -97,6 +97,12 @@ class TransactionViewModel(
             transactionRepository.delete(transaction)
         }
     }
+
+    fun updateTransaction(transaction: TransactionEntity) {
+        viewModelScope.launch {
+            transactionRepository.update(transaction)
+        }
+    }
 }
 
 class TransactionViewModelFactory(

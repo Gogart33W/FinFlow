@@ -7,6 +7,7 @@
     <string name="transaction_history">Історія операцій (%1$d)</string>
     <string name="empty_transactions">Операцій поки немає.\nНатисніть +, щоб додати першу транзакцію.</string>
     <string name="add_transaction">Нова транзакція</string>
+    <string name="edit_transaction">Редагування транзакції</string>
     <string name="expense_btn">🔴 Витрата</string>
     <string name="income_btn">🟢 Дохід</string>
     <string name="title_label">Назва (напр. Продукти в Сільпо)</string>
@@ -15,6 +16,7 @@
     <string name="account_label">Рахунок:</string>
     <string name="cancel">Скасувати</string>
     <string name="save">Зберегти</string>
+    <string name="save_changes">Зберегти зміни</string>
     <string name="delete">Видалити</string>
     <string name="currency_symbol">₴</string>
 
@@ -28,5 +30,7 @@
     <string name="initial_balance_label">Початковий баланс (₴)</string>
     <string name="cannot_delete_account_title">Неможливо видалити рахунок</string>
     <string name="cannot_delete_account_msg">На цьому рахунку є прив\'язані транзакції. Видаліть або перенісіть спочатку транзакції, щоб видалити рахунок.</string>
+    <string name="delete_confirm_title">Видалити транзакцію?</string>
+    <string name="delete_confirm_msg">Ви впевнені, що хочете видалити транзакцію \"%1$s\"?</string>
     <string name="ok">OK</string>
 </resources>

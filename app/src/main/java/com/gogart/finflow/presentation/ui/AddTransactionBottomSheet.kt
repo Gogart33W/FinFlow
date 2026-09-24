@@ -43,6 +43,8 @@ import androidx.compose.ui.unit.sp
 import com.gogart.finflow.R
 import com.gogart.finflow.data.local.entity.AccountEntity
 import com.gogart.finflow.data.local.entity.CategoryEntity
+import com.gogart.finflow.data.local.entity.TransactionEntity
+import com.gogart.finflow.data.local.entity.TransactionWithCategory
 import com.gogart.finflow.presentation.ui.util.CategoryIconHelper
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -51,14 +53,18 @@ fun AddTransactionBottomSheet(
     sheetState: SheetState,
     categories: List<CategoryEntity>,
     accounts: List<AccountEntity>,
+    existingTransaction: TransactionWithCategory? = null,
     onDismiss: () -> Unit,
-    onSave: (title: String, amount: Double, isIncome: Boolean, categoryId: Long, accountId: Long) -> Unit
+    onSaveNew: (title: String, amount: Double, isIncome: Boolean, categoryId: Long, accountId: Long) -> Unit,
+    onSaveExisting: (updatedTransaction: TransactionEntity) -> Unit = {}
 ) {
-    var title by remember { mutableStateOf("") }
-    var amountText by remember { mutableStateOf("") }
-    var isIncome by remember { mutableStateOf(false) }
-    var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
-    var selectedAccountId by remember { mutableStateOf<Long?>(null) }
+    val isEditMode = existingTransaction != null
+
+    var title by remember { mutableStateOf(existingTransaction?.transaction?.title ?: "") }
+    var amountText by remember { mutableStateOf(existingTransaction?.transaction?.amount?.toString() ?: "") }
+    var isIncome by remember { mutableStateOf(existingTransaction?.transaction?.isIncome ?: false) }
+    var selectedCategoryId by remember { mutableStateOf(existingTransaction?.transaction?.categoryId) }
+    var selectedAccountId by remember { mutableStateOf(existingTransaction?.transaction?.accountId) }
     var isError by remember { mutableStateOf(false) }
 
     val filteredCategories = categories.filter { it.isIncome == isIncome }
@@ -85,7 +91,7 @@ fun AddTransactionBottomSheet(
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             Text(
-                text = stringResource(R.string.add_transaction),
+                text = stringResource(if (isEditMode) R.string.edit_transaction else R.string.add_transaction),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -257,7 +263,18 @@ fun AddTransactionBottomSheet(
                         val catId = selectedCategoryId
                         val accId = selectedAccountId
                         if (title.isNotBlank() && amount != null && amount > 0 && catId != null && accId != null) {
-                            onSave(title.trim(), amount, isIncome, catId, accId)
+                            if (isEditMode && existingTransaction != null) {
+                                val updated = existingTransaction.transaction.copy(
+                                    title = title.trim(),
+                                    amount = amount,
+                                    isIncome = isIncome,
+                                    categoryId = catId,
+                                    accountId = accId
+                                )
+                                onSaveExisting(updated)
+                            } else {
+                                onSaveNew(title.trim(), amount, isIncome, catId, accId)
+                            }
                             onDismiss()
                         } else {
                             isError = true
@@ -265,7 +282,7 @@ fun AddTransactionBottomSheet(
                     },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(stringResource(R.string.save))
+                    Text(stringResource(if (isEditMode) R.string.save_changes else R.string.save))
                 }
             }
 
