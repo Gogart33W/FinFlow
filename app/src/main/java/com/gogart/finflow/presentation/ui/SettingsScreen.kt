@@ -1,5 +1,6 @@
 package com.gogart.finflow.presentation.ui
 
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -12,9 +13,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ColorLens
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Upload
@@ -27,8 +32,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -52,11 +61,14 @@ import androidx.compose.ui.unit.sp
 import com.gogart.finflow.R
 import com.gogart.finflow.data.backup.BackupData
 import com.gogart.finflow.presentation.viewmodel.SettingsViewModel
+import com.gogart.finflow.presentation.viewmodel.ThemeMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
     val isPinSet by viewModel.isPinSet.collectAsState()
+    val themeMode by viewModel.themeMode.collectAsState()
+    val isDynamicColorEnabled by viewModel.isDynamicColorEnabled.collectAsState()
     val backupPreview by viewModel.backupDataPreview.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -102,9 +114,108 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Appearance Section
+            Text(
+                text = "Вигляд",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.DarkMode,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.Gray
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = "Тема оформлення",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    val themeOptions = listOf("Системна", "Світла", "Темна")
+                    val selectedIndex = when (themeMode) {
+                        ThemeMode.SYSTEM -> 0
+                        ThemeMode.LIGHT -> 1
+                        ThemeMode.DARK -> 2
+                    }
+
+                    SingleChoiceSegmentedButtonRow(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        themeOptions.forEachIndexed { index, label ->
+                            SegmentedButton(
+                                selected = selectedIndex == index,
+                                onClick = {
+                                    val newMode = when (index) {
+                                        1 -> ThemeMode.LIGHT
+                                        2 -> ThemeMode.DARK
+                                        else -> ThemeMode.SYSTEM
+                                    }
+                                    viewModel.setThemeMode(newMode)
+                                },
+                                shape = SegmentedButtonDefaults.itemShape(index = index, count = themeOptions.size)
+                            ) {
+                                Text(label)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.ColorLens,
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                                tint = Color.Gray
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    text = "Кольори від шпалер",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Тільки на Android 12+",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+                        Switch(
+                            checked = isDynamicColorEnabled,
+                            onCheckedChange = { viewModel.setDynamicColorEnabled(it) },
+                            enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             // Security Section
             Text(
                 text = "Безпека",
@@ -187,8 +298,16 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Імпортувати дані")
                     }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Увага: Імпорт об'єднає існуючі записи з новими.",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
                 }
             }
+            Spacer(modifier = Modifier.height(32.dp)) // padding at bottom
         }
 
         if (showPinDialog) {

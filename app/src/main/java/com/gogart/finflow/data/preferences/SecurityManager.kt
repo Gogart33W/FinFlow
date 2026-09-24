@@ -16,6 +16,8 @@ class SecurityManager(private val context: Context) {
     private val pinKey = stringPreferencesKey("pin_hash")
     private val saltKey = stringPreferencesKey("pin_salt")
     private val onboardingKey = booleanPreferencesKey("onboarding_completed")
+    private val themeModeKey = stringPreferencesKey("theme_mode")
+    private val dynamicColorKey = booleanPreferencesKey("dynamic_color")
 
     val isPinSet: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[pinKey] != null
@@ -23,6 +25,26 @@ class SecurityManager(private val context: Context) {
 
     val isOnboardingCompleted: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[onboardingKey] ?: false
+    }
+
+    val themeMode: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[themeModeKey] ?: "SYSTEM"
+    }
+
+    val isDynamicColorEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[dynamicColorKey] ?: false
+    }
+
+    suspend fun setThemeMode(mode: String) {
+        context.dataStore.edit { preferences ->
+            preferences[themeModeKey] = mode
+        }
+    }
+
+    suspend fun setDynamicColorEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[dynamicColorKey] = enabled
+        }
     }
 
     suspend fun setOnboardingCompleted() {

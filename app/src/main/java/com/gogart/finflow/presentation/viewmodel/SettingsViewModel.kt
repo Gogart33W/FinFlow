@@ -12,8 +12,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
+enum class ThemeMode {
+    SYSTEM, LIGHT, DARK
+}
 
 class SettingsViewModel(
     private val securityManager: SecurityManager,
@@ -34,6 +39,21 @@ class SettingsViewModel(
             initialValue = true
         )
 
+    val themeMode: StateFlow<ThemeMode> = securityManager.themeMode
+        .map { ThemeMode.valueOf(it) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = ThemeMode.SYSTEM
+        )
+
+    val isDynamicColorEnabled: StateFlow<Boolean> = securityManager.isDynamicColorEnabled
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
+
     private val _messageEvent = MutableSharedFlow<String>()
     val messageEvent: SharedFlow<String> = _messageEvent
 
@@ -50,6 +70,18 @@ class SettingsViewModel(
                     _isAuthenticated.value = true
                 }
             }
+        }
+    }
+
+    fun setThemeMode(mode: ThemeMode) {
+        viewModelScope.launch {
+            securityManager.setThemeMode(mode.name)
+        }
+    }
+
+    fun setDynamicColorEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            securityManager.setDynamicColorEnabled(enabled)
         }
     }
 

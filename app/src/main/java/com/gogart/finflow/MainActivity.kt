@@ -85,7 +85,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            FinFlowTheme {
+            val themeMode by settingsViewModel.themeMode.collectAsState()
+            val dynamicColor by settingsViewModel.isDynamicColorEnabled.collectAsState()
+
+            FinFlowTheme(
+                themeMode = themeMode,
+                dynamicColorEnabled = dynamicColor
+            ) {
                 val isOnboardingCompleted by settingsViewModel.isOnboardingCompleted.collectAsState()
                 val isAuthenticated by settingsViewModel.isAuthenticated.collectAsState()
 
