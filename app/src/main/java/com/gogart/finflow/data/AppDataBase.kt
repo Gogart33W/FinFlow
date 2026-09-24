@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 @Database(
     entities = [TransactionEntity::class, CategoryEntity::class, AccountEntity::class, BudgetEntity::class],
     version = 4,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class AppDataBase : RoomDatabase() {
     abstract val transactionDao: TransactionDao

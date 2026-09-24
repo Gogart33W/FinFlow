@@ -50,12 +50,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gogart.finflow.R
+import com.gogart.finflow.data.backup.BackupData
 import com.gogart.finflow.presentation.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
     val isPinSet by viewModel.isPinSet.collectAsState()
+    val backupPreview by viewModel.backupDataPreview.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     var showPinDialog by remember { mutableStateOf(false) }
@@ -75,7 +77,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
-        uri?.let { viewModel.importData(it) }
+        uri?.let { viewModel.parseImportData(it) }
     }
 
     Scaffold(
@@ -185,13 +187,6 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Імпортувати дані")
                     }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Увага: Імпорт об'єднає існуючі записи з новими.",
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
                 }
             }
         }
@@ -211,7 +206,52 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 } else null
             )
         }
+
+        backupPreview?.let { data ->
+            ImportConfirmDialog(
+                backupData = data,
+                onConfirm = { viewModel.confirmImport() },
+                onCancel = { viewModel.cancelImport() }
+            )
+        }
     }
+}
+
+@Composable
+fun ImportConfirmDialog(
+    backupData: BackupData,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text("Підтвердження імпорту") },
+        text = {
+            Column {
+                Text("Знайдено дані у файлі:")
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("• ${backupData.accounts.size} рахунків")
+                Text("• ${backupData.categories.size} категорій")
+                Text("• ${backupData.transactions.size} транзакцій")
+                Text("• ${backupData.budgets.size} бюджетів")
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Існуючі дані будуть доповнені новими. Ви впевнені, що хочете продовжити?",
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = onConfirm) {
+                Text("Імпортувати")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }
 
 @Composable

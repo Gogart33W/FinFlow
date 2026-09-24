@@ -2,6 +2,7 @@ package com.gogart.finflow.data.backup
 
 import android.content.Context
 import android.net.Uri
+import androidx.room.withTransaction
 import com.gogart.finflow.data.local.AppDataBase
 import com.gogart.finflow.data.local.entity.AccountEntity
 import com.gogart.finflow.data.local.entity.BudgetEntity
@@ -23,9 +24,6 @@ class BackupManager(private val context: Context, private val database: AppDataB
             val accounts = database.accountDao.getAllAccounts().first()
             val categories = database.categoryDao.getAllCategories().first()
             val transactions = database.transactionDao.getAllTransactionsWithCategory().first().map { it.transaction }
-            
-            // To properly do this, we need a query that returns all budgets directly. 
-            // For now, let's assume we can get them (we will add a query in BudgetDao)
             val budgets = database.budgetDao.getAllBudgets()
 
             val backupData = BackupData(
@@ -50,35 +48,70 @@ class BackupManager(private val context: Context, private val database: AppDataB
         }
     }
 
-    suspend fun importData(uri: Uri): Boolean = withContext(Dispatchers.IO) {
+    suspend fun parseBackupData(uri: Uri): BackupData? = withContext(Dispatchers.IO) {
         try {
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 InputStreamReader(inputStream).use { reader ->
                     val backupData = gson.fromJson(reader, BackupData::class.java)
-
                     if (backupData != null && backupData.formatVersion == 1) {
-                        // Using REPLACE strategy in DAOs acts as merge (or overwrite on ID match)
-                        if (backupData.accounts.isNotEmpty()) {
-                            database.accountDao.insertAccounts(backupData.accounts)
-                        }
-                        if (backupData.categories.isNotEmpty()) {
-                            database.categoryDao.insertCategories(backupData.categories)
-                        }
-                        if (backupData.transactions.isNotEmpty()) {
-                            backupData.transactions.forEach {
-                                database.transactionDao.insertTransaction(it)
-                            }
-                        }
-                        if (backupData.budgets.isNotEmpty()) {
-                            backupData.budgets.forEach {
-                                database.budgetDao.insertOrUpdateBudget(it)
-                            }
-                        }
-                        return@withContext true
+                        return@withContext backupData
                     }
                 }
             }
-            false
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return@withContext null
+    }
+
+    suspend fun executeImport(backupData: BackupData): Boolean = withContext(Dispatchers.IO) {
+        try {
+            database.withTransaction {
+                val categoryIdMap = mutableMapOf<Long, Long>()
+                val accountIdMap = mutableMapOf<Long, Long>()
+
+                // 1. Import Categories and map old ID to new ID
+                backupData.categories.forEach { oldCategory ->
+                    val newCategory = oldCategory.copy(id = 0) // Reset ID to auto-generate
+                    val newId = database.categoryDao.insertCategory(newCategory)
+                    categoryIdMap[oldCategory.id] = newId
+                }
+
+                // 2. Import Accounts and map old ID to new ID
+                backupData.accounts.forEach { oldAccount ->
+                    val newAccount = oldAccount.copy(id = 0) // Reset ID to auto-generate
+                    val newId = database.accountDao.insertAccount(newAccount)
+                    accountIdMap[oldAccount.id] = newId
+                }
+
+                // 3. Import Transactions, mapping Foreign Keys to the new IDs
+                backupData.transactions.forEach { oldTx ->
+                    val newCategoryId = categoryIdMap[oldTx.categoryId]
+                    val newAccountId = accountIdMap[oldTx.accountId]
+
+                    if (newCategoryId != null && newAccountId != null) {
+                        val newTx = oldTx.copy(
+                            id = 0, // Reset ID
+                            categoryId = newCategoryId,
+                            accountId = newAccountId
+                        )
+                        database.transactionDao.insertTransaction(newTx)
+                    }
+                }
+
+                // 4. Import Budgets, mapping Foreign Keys
+                backupData.budgets.forEach { oldBudget ->
+                    val newCategoryId = categoryIdMap[oldBudget.categoryId]
+                    if (newCategoryId != null) {
+                        val newBudget = oldBudget.copy(
+                            id = 0, // Reset ID
+                            categoryId = newCategoryId
+                        )
+                        database.budgetDao.insertOrUpdateBudget(newBudget)
+                    }
+                }
+            }
+            true
         } catch (e: Exception) {
             e.printStackTrace()
             false

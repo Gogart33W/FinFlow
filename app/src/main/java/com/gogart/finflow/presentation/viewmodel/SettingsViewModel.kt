@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.gogart.finflow.data.backup.BackupData
 import com.gogart.finflow.data.backup.BackupManager
 import com.gogart.finflow.data.preferences.SecurityManager
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,7 +31,7 @@ class SettingsViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = true // assume true until loaded to avoid flash
+            initialValue = true
         )
 
     private val _messageEvent = MutableSharedFlow<String>()
@@ -38,6 +39,9 @@ class SettingsViewModel(
 
     private val _isAuthenticated = MutableStateFlow(false)
     val isAuthenticated: StateFlow<Boolean> = _isAuthenticated
+
+    private val _backupDataPreview = MutableStateFlow<BackupData?>(null)
+    val backupDataPreview: StateFlow<BackupData?> = _backupDataPreview
 
     init {
         viewModelScope.launch {
@@ -59,7 +63,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             securityManager.setPin(pin)
             if (pin == null) {
-                _isAuthenticated.value = true // Unlocked if PIN is removed
+                _isAuthenticated.value = true
                 _messageEvent.emit("PIN-код успішно видалено")
             } else {
                 _messageEvent.emit("PIN-код успішно встановлено")
@@ -91,12 +95,29 @@ class SettingsViewModel(
         }
     }
 
-    fun importData(uri: Uri) {
+    fun parseImportData(uri: Uri) {
         viewModelScope.launch {
-            val success = backupManager.importData(uri)
+            val data = backupManager.parseBackupData(uri)
+            if (data != null) {
+                _backupDataPreview.value = data
+            } else {
+                _messageEvent.emit("Помилка зчитування файлу бекапу")
+            }
+        }
+    }
+
+    fun confirmImport() {
+        val data = _backupDataPreview.value ?: return
+        viewModelScope.launch {
+            val success = backupManager.executeImport(data)
+            _backupDataPreview.value = null
             val msg = if (success) "Дані успішно імпортовано" else "Помилка при імпорті"
             _messageEvent.emit(msg)
         }
+    }
+
+    fun cancelImport() {
+        _backupDataPreview.value = null
     }
 }
 
