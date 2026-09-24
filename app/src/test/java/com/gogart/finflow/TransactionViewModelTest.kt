@@ -1,5 +1,6 @@
 package com.gogart.finflow
 
+import app.cash.turbine.test
 import com.gogart.finflow.data.local.dao.AccountDao
 import com.gogart.finflow.data.local.dao.CategoryDao
 import com.gogart.finflow.data.local.dao.TransactionDao
@@ -41,29 +42,89 @@ class TransactionViewModelTest {
     }
 
     @Test
-    fun totalsCalculationWorksCorrectly() = runTest {
+    fun emptyListReturnsZeroTotals() = runTest {
+        val fakeTransactionDao = createFakeTransactionDao(emptyList())
+        val viewModel = createViewModel(fakeTransactionDao)
+
+        viewModel.totalBalance.test {
+            assertEquals(0.0, awaitItem(), 0.01)
+        }
+        viewModel.totalIncome.test {
+            assertEquals(0.0, awaitItem(), 0.01)
+        }
+        viewModel.totalExpense.test {
+            assertEquals(0.0, awaitItem(), 0.01)
+        }
+    }
+
+    @Test
+    fun incomeOnlyTransactionsReturnCorrectBalanceAndExpenseZero() = runTest {
+        val categoryIncome = CategoryEntity(id = 1, name = "Зарплата", iconName = "Work", colorHex = "#4CAF50", isIncome = true)
+        val tx1 = TransactionWithCategory(
+            transaction = TransactionEntity(id = 1, title = "Зарплата", amount = 1500.0, timestamp = 100, isIncome = true, categoryId = 1, accountId = 1),
+            category = categoryIncome
+        )
+
+        val fakeTransactionDao = createFakeTransactionDao(listOf(tx1))
+        val viewModel = createViewModel(fakeTransactionDao)
+
+        viewModel.totalIncome.test {
+            assertEquals(0.0, awaitItem(), 0.01)
+            assertEquals(1500.0, awaitItem(), 0.01)
+        }
+        viewModel.totalExpense.test {
+            assertEquals(0.0, awaitItem(), 0.01)
+        }
+        viewModel.totalBalance.test {
+            assertEquals(0.0, awaitItem(), 0.01)
+            assertEquals(1500.0, awaitItem(), 0.01)
+        }
+    }
+
+    @Test
+    fun totalsCalculationWorksCorrectlyForIncomeAndExpenses() = runTest {
         val categoryIncome = CategoryEntity(id = 1, name = "Зарплата", iconName = "Work", colorHex = "#4CAF50", isIncome = true)
         val categoryExpense = CategoryEntity(id = 2, name = "Продукти", iconName = "ShoppingCart", colorHex = "#FF5722", isIncome = false)
 
         val tx1 = TransactionWithCategory(
-            transaction = TransactionEntity(id = 1, title = "Зарплата", amount = 1000.0, timestamp = 100, isIncome = true, categoryId = 1),
+            transaction = TransactionEntity(id = 1, title = "Зарплата", amount = 1000.0, timestamp = 100, isIncome = true, categoryId = 1, accountId = 1),
             category = categoryIncome
         )
         val tx2 = TransactionWithCategory(
-            transaction = TransactionEntity(id = 2, title = "Сільпо", amount = 300.0, timestamp = 200, isIncome = false, categoryId = 2),
+            transaction = TransactionEntity(id = 2, title = "Сільпо", amount = 300.0, timestamp = 200, isIncome = false, categoryId = 2, accountId = 1),
             category = categoryExpense
         )
 
-        val fakeTransactionDao = object : TransactionDao {
+        val fakeTransactionDao = createFakeTransactionDao(listOf(tx1, tx2))
+        val viewModel = createViewModel(fakeTransactionDao)
+
+        viewModel.totalIncome.test {
+            assertEquals(0.0, awaitItem(), 0.01)
+            assertEquals(1000.0, awaitItem(), 0.01)
+        }
+        viewModel.totalExpense.test {
+            assertEquals(0.0, awaitItem(), 0.01)
+            assertEquals(300.0, awaitItem(), 0.01)
+        }
+        viewModel.totalBalance.test {
+            assertEquals(0.0, awaitItem(), 0.01)
+            assertEquals(700.0, awaitItem(), 0.01)
+        }
+    }
+
+    private fun createFakeTransactionDao(list: List<TransactionWithCategory>): TransactionDao {
+        return object : TransactionDao {
             override suspend fun insertTransaction(transaction: TransactionEntity) {}
             override suspend fun deleteTransaction(transaction: TransactionEntity) {}
-            override fun getAllTransactionsWithCategory(): Flow<List<TransactionWithCategory>> = MutableStateFlow(listOf(tx1, tx2))
+            override fun getAllTransactionsWithCategory(): Flow<List<TransactionWithCategory>> = MutableStateFlow(list)
             override suspend fun getTransactionCountByCategoryId(categoryId: Long): Int = 0
             override suspend fun getTransactionCountByAccountId(accountId: Long): Int = 0
         }
+    }
 
+    private fun createViewModel(transactionDao: TransactionDao): TransactionViewModel {
         val fakeCategoryDao = object : CategoryDao {
-            override fun getAllCategories(): Flow<List<CategoryEntity>> = MutableStateFlow(listOf(categoryIncome, categoryExpense))
+            override fun getAllCategories(): Flow<List<CategoryEntity>> = MutableStateFlow(emptyList())
             override fun getCategoriesByType(isIncome: Boolean): Flow<List<CategoryEntity>> = MutableStateFlow(emptyList())
             override suspend fun getCategoryById(id: Long): CategoryEntity? = null
             override suspend fun insertCategory(category: CategoryEntity): Long = 0
@@ -83,15 +144,10 @@ class TransactionViewModelTest {
             override suspend fun deleteAccount(account: AccountEntity) {}
         }
 
-        val transactionRepository = TransactionRepository(fakeTransactionDao)
+        val transactionRepository = TransactionRepository(transactionDao)
         val categoryRepository = CategoryRepository(fakeCategoryDao)
-        val accountRepository = AccountRepository(fakeAccountDao, fakeTransactionDao)
+        val accountRepository = AccountRepository(fakeAccountDao, transactionDao)
 
-        val viewModel = TransactionViewModel(transactionRepository, categoryRepository, accountRepository)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(1000.0, viewModel.totalIncome.value, 0.01)
-        assertEquals(300.0, viewModel.totalExpense.value, 0.01)
-        assertEquals(700.0, viewModel.totalBalance.value, 0.01)
+        return TransactionViewModel(transactionRepository, categoryRepository, accountRepository)
     }
 }

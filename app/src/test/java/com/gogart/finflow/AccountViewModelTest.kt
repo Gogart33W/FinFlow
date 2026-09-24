@@ -1,5 +1,6 @@
 package com.gogart.finflow
 
+import app.cash.turbine.test
 import com.gogart.finflow.data.local.dao.AccountDao
 import com.gogart.finflow.data.local.dao.TransactionDao
 import com.gogart.finflow.data.local.entity.AccountEntity
@@ -48,8 +49,8 @@ class AccountViewModelTest {
         val fakeAccountDao = object : AccountDao {
             override fun getAllAccounts(): Flow<List<AccountEntity>> = MutableStateFlow(listOf(accountCash, accountCard))
             override fun getAllAccountsWithBalance(): Flow<List<AccountWithBalance>> = MutableStateFlow(listOf(accountWithBal1, accountWithBal2))
-            override suspend fun getDefaultAccount(): AccountEntity? = accountCash
-            override suspend fun getAccountById(id: Long): AccountEntity? = if (id == 1L) accountCash else accountCard
+            override suspend fun getDefaultAccount(): AccountEntity = accountCash
+            override suspend fun getAccountById(id: Long): AccountEntity = if (id == 1L) accountCash else accountCard
             override suspend fun insertAccount(account: AccountEntity): Long = 1
             override suspend fun insertAccounts(accounts: List<AccountEntity>) {}
             override suspend fun updateAccount(account: AccountEntity) {}
@@ -67,10 +68,12 @@ class AccountViewModelTest {
         val repository = AccountRepository(fakeAccountDao, fakeTransactionDao)
         val viewModel = AccountViewModel(repository)
 
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(2, viewModel.accountsWithBalance.value.size)
-        assertEquals(150.0, viewModel.accountsWithBalance.value[0].currentBalance, 0.01)
-        assertEquals(400.0, viewModel.accountsWithBalance.value[1].currentBalance, 0.01)
+        viewModel.accountsWithBalance.test {
+            assertEquals(emptyList<AccountWithBalance>(), awaitItem())
+            val list = awaitItem()
+            assertEquals(2, list.size)
+            assertEquals(150.0, list[0].currentBalance, 0.01)
+            assertEquals(400.0, list[1].currentBalance, 0.01)
+        }
     }
 }
