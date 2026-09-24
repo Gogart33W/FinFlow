@@ -34,4 +34,12 @@
     <string name="delete_confirm_title">Видалити транзакцію?</string>
     <string name="delete_confirm_msg">Ви впевнені, що хочете видалити транзакцію \"%1$s\"?</string>
     <string name="ok">OK</string>
+
+    <!-- Budgets -->
+    <string name="budgets_title">Місячні бюджети категорій</string>
+    <string name="set_budget">Встановити бюджет</string>
+    <string name="monthly_limit_label">Місячний ліміт (₴)</string>
+    <string name="budget_exceeded">Перевищено ліміт!</string>
+    <string name="budget_warning">Наближення до ліміту (понад 70%)</string>
+    <string name="no_budgets_set">Бюджети для категорій ще не встановлено.</string>
 </resources>

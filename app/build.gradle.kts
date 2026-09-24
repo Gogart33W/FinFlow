@@ -54,6 +54,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.app.cash.turbine)
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    testImplementation("org.mockito:mockito-core:5.11.0")
     testImplementation("androidx.room:room-testing:2.8.5")
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

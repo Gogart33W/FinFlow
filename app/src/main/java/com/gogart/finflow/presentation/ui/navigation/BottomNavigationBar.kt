@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -19,11 +20,12 @@ sealed class Screen(val route: String, val titleResId: Int, val icon: ImageVecto
     data object Home : Screen("home", R.string.nav_home, Icons.Default.Home)
     data object Accounts : Screen("accounts", R.string.nav_accounts, Icons.Default.AccountBalanceWallet)
     data object Statistics : Screen("statistics", R.string.nav_statistics, Icons.Default.BarChart)
+    data object Budgets : Screen("budgets", R.string.budgets_title, Icons.Default.PieChart)
 }
 
 @Composable
 fun BottomNavigationBar(navController: NavController) {
-    val items = listOf(Screen.Home, Screen.Accounts, Screen.Statistics)
+    val items = listOf(Screen.Home, Screen.Accounts, Screen.Statistics, Screen.Budgets)
     val navBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry.value?.destination?.route
 

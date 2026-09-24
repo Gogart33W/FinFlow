@@ -8,18 +8,26 @@ import com.gogart.finflow.data.local.entity.CategoryEntity
 import com.gogart.finflow.data.local.entity.TransactionEntity
 import com.gogart.finflow.data.local.entity.TransactionWithCategory
 import com.gogart.finflow.data.repository.AccountRepository
+import com.gogart.finflow.data.repository.BudgetRepository
 import com.gogart.finflow.data.repository.CategoryRepository
 import com.gogart.finflow.data.repository.TransactionRepository
+import com.gogart.finflow.presentation.util.NotificationHelper
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class TransactionViewModel(
     private val transactionRepository: TransactionRepository,
     private val categoryRepository: CategoryRepository,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val budgetRepository: BudgetRepository,
+    private val notificationHelper: NotificationHelper
 ) : ViewModel() {
 
     val transactions: StateFlow<List<TransactionWithCategory>> =
@@ -89,6 +97,33 @@ class TransactionViewModel(
                 accountId = accountId
             )
             transactionRepository.insert(entity)
+
+            if (!isIncome) {
+                checkBudgetLimit(categoryId, amount)
+            }
+        }
+    }
+
+    private suspend fun checkBudgetLimit(categoryId: Long, newAmount: Double) {
+        val currentYearMonthFormat = SimpleDateFormat("yyyy-MM", Locale.getDefault())
+        val currentMonth = currentYearMonthFormat.format(Date())
+
+        val budgets = budgetRepository.getBudgetsWithSpent(currentMonth).firstOrNull()
+        val budgetForCategory = budgets?.find { it.category.id == categoryId }
+
+        if (budgetForCategory != null) {
+            val budgetLimit = budgetForCategory.budget.monthlyLimit
+            val newTotalSpent = budgetForCategory.spentAmount + newAmount
+
+            if (budgetLimit > 0 && newTotalSpent >= 0.9 * budgetLimit) {
+                // Trigger notification (basic 90% threshold for now)
+                val percentage = ((newTotalSpent / budgetLimit) * 100).toInt()
+                notificationHelper.showBudgetWarningNotification(
+                    categoryId = categoryId,
+                    categoryName = budgetForCategory.category.name,
+                    percentage = percentage
+                )
+            }
         }
     }
 
@@ -108,7 +143,9 @@ class TransactionViewModel(
 class TransactionViewModelFactory(
     private val transactionRepository: TransactionRepository,
     private val categoryRepository: CategoryRepository,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val budgetRepository: BudgetRepository,
+    private val notificationHelper: NotificationHelper
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -116,7 +153,9 @@ class TransactionViewModelFactory(
             return TransactionViewModel(
                 transactionRepository,
                 categoryRepository,
-                accountRepository
+                accountRepository,
+                budgetRepository,
+                notificationHelper
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

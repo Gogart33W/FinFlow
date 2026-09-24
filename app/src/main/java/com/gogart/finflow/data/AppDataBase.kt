@@ -7,10 +7,12 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.gogart.finflow.data.local.dao.AccountDao
+import com.gogart.finflow.data.local.dao.BudgetDao
 import com.gogart.finflow.data.local.dao.CategoryDao
 import com.gogart.finflow.data.local.dao.TransactionDao
 import com.gogart.finflow.data.local.entity.AccountEntity
 import com.gogart.finflow.data.local.entity.AccountType
+import com.gogart.finflow.data.local.entity.BudgetEntity
 import com.gogart.finflow.data.local.entity.CategoryEntity
 import com.gogart.finflow.data.local.entity.TransactionEntity
 import kotlinx.coroutines.CoroutineScope
@@ -18,14 +20,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [TransactionEntity::class, CategoryEntity::class, AccountEntity::class],
-    version = 3,
+    entities = [TransactionEntity::class, CategoryEntity::class, AccountEntity::class, BudgetEntity::class],
+    version = 4,
     exportSchema = false
 )
 abstract class AppDataBase : RoomDatabase() {
     abstract val transactionDao: TransactionDao
     abstract val categoryDao: CategoryDao
     abstract val accountDao: AccountDao
+    abstract val budgetDao: BudgetDao
 
     companion object {
         @Volatile
@@ -92,7 +95,6 @@ abstract class AppDataBase : RoomDatabase() {
 
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // 1. Create accounts table
                 db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS `accounts` (
@@ -106,12 +108,10 @@ abstract class AppDataBase : RoomDatabase() {
                     """.trimIndent()
                 )
 
-                // 2. Insert default CASH account
                 db.execSQL(
                     "INSERT INTO `accounts` (`id`, `name`, `type`, `initialBalance`, `colorHex`, `isDefault`) VALUES (1, 'Готівка', 'CASH', 0.0, '#4CAF50', 1)"
                 )
 
-                // 3. Recreate transactions table with accountId FK
                 db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS `transactions_new` (
@@ -140,6 +140,23 @@ abstract class AppDataBase : RoomDatabase() {
                 db.execSQL("ALTER TABLE `transactions_new` RENAME TO `transactions`")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_transactions_categoryId` ON `transactions` (`categoryId`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_transactions_accountId` ON `transactions` (`accountId`)")
+            }
+        }
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `budgets` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `categoryId` INTEGER NOT NULL,
+                        `monthlyLimit` REAL NOT NULL,
+                        `yearMonth` TEXT NOT NULL,
+                        FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_budgets_categoryId_yearMonth` ON `budgets` (`categoryId`, `yearMonth`)")
             }
         }
 
@@ -176,7 +193,7 @@ abstract class AppDataBase : RoomDatabase() {
                     AppDataBase::class.java,
                     "finflow_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .addCallback(object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)

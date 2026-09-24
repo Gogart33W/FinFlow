@@ -14,15 +14,20 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.gogart.finflow.data.local.AppDataBase
 import com.gogart.finflow.data.repository.AccountRepository
+import com.gogart.finflow.data.repository.BudgetRepository
 import com.gogart.finflow.data.repository.CategoryRepository
 import com.gogart.finflow.data.repository.TransactionRepository
 import com.gogart.finflow.presentation.ui.AccountsScreen
+import com.gogart.finflow.presentation.ui.BudgetsScreen
 import com.gogart.finflow.presentation.ui.MainScreen
 import com.gogart.finflow.presentation.ui.StatisticsScreen
 import com.gogart.finflow.presentation.ui.navigation.BottomNavigationBar
 import com.gogart.finflow.presentation.ui.navigation.Screen
+import com.gogart.finflow.presentation.util.NotificationHelper
 import com.gogart.finflow.presentation.viewmodel.AccountViewModel
 import com.gogart.finflow.presentation.viewmodel.AccountViewModelFactory
+import com.gogart.finflow.presentation.viewmodel.BudgetViewModel
+import com.gogart.finflow.presentation.viewmodel.BudgetViewModelFactory
 import com.gogart.finflow.presentation.viewmodel.StatisticsViewModel
 import com.gogart.finflow.presentation.viewmodel.StatisticsViewModelFactory
 import com.gogart.finflow.presentation.viewmodel.TransactionViewModel
@@ -36,7 +41,9 @@ class MainActivity : ComponentActivity() {
         val transactionRepository = TransactionRepository(database.transactionDao)
         val categoryRepository = CategoryRepository(database.categoryDao)
         val accountRepository = AccountRepository(database.accountDao, database.transactionDao)
-        TransactionViewModelFactory(transactionRepository, categoryRepository, accountRepository)
+        val budgetRepository = BudgetRepository(database.budgetDao)
+        val notificationHelper = NotificationHelper(applicationContext)
+        TransactionViewModelFactory(transactionRepository, categoryRepository, accountRepository, budgetRepository, notificationHelper)
     }
 
     private val accountViewModel: AccountViewModel by viewModels {
@@ -51,6 +58,13 @@ class MainActivity : ComponentActivity() {
         StatisticsViewModelFactory(transactionRepository)
     }
 
+    private val budgetViewModel: BudgetViewModel by viewModels {
+        val database = AppDataBase.getDatabase(applicationContext)
+        val budgetRepository = BudgetRepository(database.budgetDao)
+        val categoryRepository = CategoryRepository(database.categoryDao)
+        BudgetViewModelFactory(budgetRepository, categoryRepository)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -59,7 +73,8 @@ class MainActivity : ComponentActivity() {
                 MainNavigationApp(
                     transactionViewModel = transactionViewModel,
                     accountViewModel = accountViewModel,
-                    statisticsViewModel = statisticsViewModel
+                    statisticsViewModel = statisticsViewModel,
+                    budgetViewModel = budgetViewModel
                 )
             }
         }
@@ -70,7 +85,8 @@ class MainActivity : ComponentActivity() {
 fun MainNavigationApp(
     transactionViewModel: TransactionViewModel,
     accountViewModel: AccountViewModel,
-    statisticsViewModel: StatisticsViewModel
+    statisticsViewModel: StatisticsViewModel,
+    budgetViewModel: BudgetViewModel
 ) {
     val navController = rememberNavController()
 
@@ -90,6 +106,9 @@ fun MainNavigationApp(
             }
             composable(Screen.Statistics.route) {
                 StatisticsScreen(viewModel = statisticsViewModel)
+            }
+            composable(Screen.Budgets.route) {
+                BudgetsScreen(viewModel = budgetViewModel)
             }
         }
     }
