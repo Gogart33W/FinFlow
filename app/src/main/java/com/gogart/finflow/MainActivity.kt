@@ -18,10 +18,13 @@ import com.gogart.finflow.data.repository.CategoryRepository
 import com.gogart.finflow.data.repository.TransactionRepository
 import com.gogart.finflow.presentation.ui.AccountsScreen
 import com.gogart.finflow.presentation.ui.MainScreen
+import com.gogart.finflow.presentation.ui.StatisticsScreen
 import com.gogart.finflow.presentation.ui.navigation.BottomNavigationBar
 import com.gogart.finflow.presentation.ui.navigation.Screen
 import com.gogart.finflow.presentation.viewmodel.AccountViewModel
 import com.gogart.finflow.presentation.viewmodel.AccountViewModelFactory
+import com.gogart.finflow.presentation.viewmodel.StatisticsViewModel
+import com.gogart.finflow.presentation.viewmodel.StatisticsViewModelFactory
 import com.gogart.finflow.presentation.viewmodel.TransactionViewModel
 import com.gogart.finflow.presentation.viewmodel.TransactionViewModelFactory
 import com.gogart.finflow.ui.theme.FinFlowTheme
@@ -42,6 +45,12 @@ class MainActivity : ComponentActivity() {
         AccountViewModelFactory(accountRepository)
     }
 
+    private val statisticsViewModel: StatisticsViewModel by viewModels {
+        val database = AppDataBase.getDatabase(applicationContext)
+        val transactionRepository = TransactionRepository(database.transactionDao)
+        StatisticsViewModelFactory(transactionRepository)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -49,7 +58,8 @@ class MainActivity : ComponentActivity() {
             FinFlowTheme {
                 MainNavigationApp(
                     transactionViewModel = transactionViewModel,
-                    accountViewModel = accountViewModel
+                    accountViewModel = accountViewModel,
+                    statisticsViewModel = statisticsViewModel
                 )
             }
         }
@@ -59,7 +69,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainNavigationApp(
     transactionViewModel: TransactionViewModel,
-    accountViewModel: AccountViewModel
+    accountViewModel: AccountViewModel,
+    statisticsViewModel: StatisticsViewModel
 ) {
     val navController = rememberNavController()
 
@@ -76,6 +87,9 @@ fun MainNavigationApp(
             }
             composable(Screen.Accounts.route) {
                 AccountsScreen(accountViewModel = accountViewModel)
+            }
+            composable(Screen.Statistics.route) {
+                StatisticsScreen(viewModel = statisticsViewModel)
             }
         }
     }

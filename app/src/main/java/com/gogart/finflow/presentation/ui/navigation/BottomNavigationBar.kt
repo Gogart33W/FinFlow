@@ -2,6 +2,7 @@ package com.gogart.finflow.presentation.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -17,11 +18,12 @@ import com.gogart.finflow.R
 sealed class Screen(val route: String, val titleResId: Int, val icon: ImageVector) {
     data object Home : Screen("home", R.string.nav_home, Icons.Default.Home)
     data object Accounts : Screen("accounts", R.string.nav_accounts, Icons.Default.AccountBalanceWallet)
+    data object Statistics : Screen("statistics", R.string.nav_statistics, Icons.Default.BarChart)
 }
 
 @Composable
 fun BottomNavigationBar(navController: NavController) {
-    val items = listOf(Screen.Home, Screen.Accounts)
+    val items = listOf(Screen.Home, Screen.Accounts, Screen.Statistics)
     val navBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry.value?.destination?.route
 

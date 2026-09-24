@@ -23,6 +23,7 @@
     <!-- Navigation & Accounts -->
     <string name="nav_home">Головна</string>
     <string name="nav_accounts">Рахунки</string>
+    <string name="nav_statistics">Статистика</string>
     <string name="accounts_title">Мої рахунки</string>
     <string name="add_account">Новий рахунок</string>
     <string name="account_name_label">Назва рахунку (напр. Картка Monobank)</string>

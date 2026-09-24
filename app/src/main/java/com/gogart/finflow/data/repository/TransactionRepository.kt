@@ -1,6 +1,8 @@
 package com.gogart.finflow.data.repository
 
 import com.gogart.finflow.data.local.dao.TransactionDao
+import com.gogart.finflow.data.local.entity.CategoryExpenseSummary
+import com.gogart.finflow.data.local.entity.PeriodSummary
 import com.gogart.finflow.data.local.entity.TransactionEntity
 import com.gogart.finflow.data.local.entity.TransactionWithCategory
 import kotlinx.coroutines.flow.Flow
@@ -23,4 +25,10 @@ class TransactionRepository(private val dao: TransactionDao) {
 
     suspend fun getTransactionCountByCategoryId(categoryId: Long): Int =
         dao.getTransactionCountByCategoryId(categoryId)
+
+    fun getExpenseSummaryByCategory(startTime: Long, endTime: Long): Flow<List<CategoryExpenseSummary>> =
+        dao.getExpenseSummaryByCategory(startTime, endTime)
+
+    fun getPeriodSummary(startTime: Long, endTime: Long): Flow<PeriodSummary> =
+        dao.getPeriodSummary(startTime, endTime)
 }
