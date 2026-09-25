@@ -17,11 +17,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -56,13 +56,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.gogart.finflow.R
 import com.gogart.finflow.data.local.entity.BudgetWithSpent
 import com.gogart.finflow.data.local.entity.CategoryEntity
 import com.gogart.finflow.presentation.ui.util.CategoryIconHelper
+import com.gogart.finflow.presentation.ui.util.CurrencyFormatter
 import com.gogart.finflow.presentation.viewmodel.BudgetViewModel
-import java.util.Locale
+import com.gogart.finflow.ui.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,8 +79,7 @@ fun BudgetsScreen(viewModel: BudgetViewModel) {
                 title = {
                     Text(
                         text = stringResource(R.string.budgets_title),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp
+                        style = MaterialTheme.typography.titleLarge
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -92,12 +91,13 @@ fun BudgetsScreen(viewModel: BudgetViewModel) {
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddBottomSheet = true },
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = MaterialTheme.colorScheme.primary,
+                shape = MaterialTheme.shapes.large
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = stringResource(R.string.set_budget),
-                    tint = Color.White
+                    tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
         }
@@ -106,24 +106,46 @@ fun BudgetsScreen(viewModel: BudgetViewModel) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = Spacing.m)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.m))
 
             if (budgets.isEmpty()) {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(Spacing.xl),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = stringResource(R.string.no_budgets_set),
-                        color = Color.Gray,
-                        fontSize = 16.sp
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PieChart,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.outline,
+                                modifier = Modifier.size(36.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(Spacing.m))
+                        Text(
+                            text = stringResource(R.string.no_budgets_set),
+                            color = MaterialTheme.colorScheme.outline,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.m),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(items = budgets, key = { it.budget.id }) { item ->
@@ -154,6 +176,7 @@ fun BudgetCardItem(
     budgetWithSpent: BudgetWithSpent,
     onDelete: () -> Unit
 ) {
+    val currencySymbol = stringResource(R.string.currency_symbol)
     val category = budgetWithSpent.category
     val budget = budgetWithSpent.budget
     val spent = budgetWithSpent.spentAmount
@@ -164,18 +187,18 @@ fun BudgetCardItem(
     val icon = CategoryIconHelper.getIconByName(category.iconName)
 
     val progressColor = when {
-        percentage >= 1.0 -> Color(0xFFD32F2F) // Red
+        percentage >= 1.0 -> MaterialTheme.colorScheme.error // Red equivalent
         percentage >= 0.7 -> Color(0xFFFBC02D) // Yellow
         else -> Color(0xFF388E3C) // Green
     }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(Spacing.m)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -194,56 +217,53 @@ fun BudgetCardItem(
                         modifier = Modifier.size(24.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(Spacing.s + Spacing.xs))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = category.name,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        text = String.format(Locale.getDefault(), "Ліміт: %.2f ₴", budget.monthlyLimit),
-                        fontSize = 14.sp,
-                        color = Color.Gray
+                        text = "${stringResource(R.string.budget_limit_label)}: ${CurrencyFormatter.formatAmount(budget.monthlyLimit, currencySymbol)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.outline
                     )
                 }
                 IconButton(onClick = onDelete) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = stringResource(R.string.delete),
-                        tint = Color.Gray
+                        tint = MaterialTheme.colorScheme.outline
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.m))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = String.format(Locale.getDefault(), "Витрачено: %.2f ₴", spent),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    text = "${stringResource(R.string.budget_spent_label)}: ${CurrencyFormatter.formatAmount(spent, currencySymbol)}",
+                    style = MaterialTheme.typography.labelMedium,
                     color = progressColor
                 )
                 Text(
-                    text = String.format(Locale.getDefault(), "%.0f%%", percentage * 100),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
+                    text = "${(percentage * 100).toInt()}%",
+                    style = MaterialTheme.typography.labelLarge,
                     color = progressColor
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.s))
 
             LinearProgressIndicator(
                 progress = { percentage.toFloat().coerceIn(0f, 1f) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp)),
+                    .clip(MaterialTheme.shapes.extraSmall),
                 color = progressColor,
                 trackColor = progressColor.copy(alpha = 0.2f)
             )
@@ -270,13 +290,12 @@ fun SetBudgetBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .padding(horizontal = Spacing.m + Spacing.xs, vertical = Spacing.s + Spacing.xs)
         ) {
             Text(
                 text = stringResource(R.string.set_budget),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 16.dp)
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = Spacing.m)
             )
 
             OutlinedTextField(
@@ -294,18 +313,17 @@ fun SetBudgetBottomSheet(
                 isError = isError && (limitText.toDoubleOrNull() == null || limitText.toDouble() <= 0)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.m))
 
             Text(
                 text = stringResource(R.string.category_label),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(bottom = 8.dp)
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(bottom = Spacing.s)
             )
 
             FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.s),
+                verticalArrangement = Arrangement.spacedBy(Spacing.s),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 categories.forEach { category ->
@@ -321,23 +339,24 @@ fun SetBudgetBottomSheet(
                             Icon(
                                 imageVector = icon,
                                 contentDescription = null,
-                                tint = if (isSelected) categoryColor else Color.Gray,
+                                tint = if (isSelected) categoryColor else MaterialTheme.colorScheme.outline,
                                 modifier = Modifier.size(16.dp)
                             )
                         },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = categoryColor.copy(alpha = 0.15f),
                             selectedLabelColor = categoryColor
-                        )
+                        ),
+                        shape = MaterialTheme.shapes.small
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Spacing.l))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.s + Spacing.xs)
             ) {
                 OutlinedButton(
                     onClick = onDismiss,
@@ -362,7 +381,7 @@ fun SetBudgetBottomSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Spacing.l))
         }
     }
 }

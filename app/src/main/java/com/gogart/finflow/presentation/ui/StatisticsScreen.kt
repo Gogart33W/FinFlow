@@ -2,6 +2,7 @@ package com.gogart.finflow.presentation.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,25 +34,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.gogart.finflow.R
 import com.gogart.finflow.data.local.entity.CategoryExpenseSummary
 import com.gogart.finflow.presentation.ui.util.CategoryIconHelper
+import com.gogart.finflow.presentation.ui.util.CurrencyFormatter
 import com.gogart.finflow.presentation.viewmodel.StatisticsViewModel
 import com.gogart.finflow.presentation.viewmodel.TimePeriod
+import com.gogart.finflow.ui.theme.FinFlowExtendedColors
+import com.gogart.finflow.ui.theme.Spacing
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatisticsScreen(viewModel: StatisticsViewModel) {
     val selectedPeriod by viewModel.selectedPeriod.collectAsState()
-    val periodSummary by viewModel.periodSummary.collectAsState()
     val expenseCategories by viewModel.expenseCategories.collectAsState()
 
     val totalExpenseSum = expenseCategories.sumOf { it.totalAmount }
@@ -63,8 +63,7 @@ fun StatisticsScreen(viewModel: StatisticsViewModel) {
                 title = {
                     Text(
                         text = stringResource(R.string.nav_statistics),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp
+                        style = MaterialTheme.typography.titleLarge
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -78,43 +77,43 @@ fun StatisticsScreen(viewModel: StatisticsViewModel) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = Spacing.m)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.m))
 
             // Time Period Selector
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.s),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 TimePeriod.entries.forEach { period ->
                     FilterChip(
                         selected = selectedPeriod == period,
                         onClick = { viewModel.selectPeriod(period) },
-                        label = { Text(period.title) }
+                        label = { Text(period.title, style = MaterialTheme.typography.labelLarge) },
+                        shape = MaterialTheme.shapes.small
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.m))
 
             if (totalExpenseSum <= 0) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(32.dp),
+                        .padding(Spacing.xl),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "За обраний період витрат не знайдено.",
-                        color = Color.Gray,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
+                        text = stringResource(R.string.empty_expense_summary),
+                        color = MaterialTheme.colorScheme.outline,
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.m),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     // Pie Chart Section
@@ -128,24 +127,22 @@ fun StatisticsScreen(viewModel: StatisticsViewModel) {
                     // Top Categories Header
                     item {
                         Text(
-                            text = "Структура витрат за категоріями",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(vertical = 4.dp)
+                            text = stringResource(R.string.expense_structure_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(vertical = Spacing.xs)
                         )
                     }
 
                     // Top Categories List
-                    itemsIndexed(expenseCategories) { index, categorySummary ->
+                    itemsIndexed(expenseCategories) { _, categorySummary ->
                         CategoryExpenseProgressCard(
-                            rank = index + 1,
                             summary = categorySummary,
                             totalExpense = totalExpenseSum
                         )
                     }
 
                     item {
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(Spacing.m))
                     }
                 }
             }
@@ -158,16 +155,20 @@ fun ExpensePieChartCard(
     totalExpense: Double,
     categories: List<CategoryExpenseSummary>
 ) {
+    val currencySymbol = stringResource(R.string.currency_symbol)
+    val isDark = isSystemInDarkTheme()
+    val expenseColor = if (isDark) FinFlowExtendedColors.ExpenseDark else FinFlowExtendedColors.ExpenseLight
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
+                .padding(Spacing.m + Spacing.xs),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
@@ -195,15 +196,15 @@ fun ExpensePieChartCard(
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Всього витрат",
-                        fontSize = 12.sp,
-                        color = Color.Gray
+                        text = stringResource(R.string.total_expense_label),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline
                     )
                     Text(
-                        text = String.format(Locale.getDefault(), "%.2f ₴", totalExpense),
-                        fontSize = 20.sp,
+                        text = CurrencyFormatter.formatAmount(totalExpense, currencySymbol),
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFC62828)
+                        color = expenseColor
                     )
                 }
             }
@@ -213,22 +214,25 @@ fun ExpensePieChartCard(
 
 @Composable
 fun CategoryExpenseProgressCard(
-    rank: Int,
     summary: CategoryExpenseSummary,
     totalExpense: Double
 ) {
+    val currencySymbol = stringResource(R.string.currency_symbol)
+    val isDark = isSystemInDarkTheme()
+    val expenseColor = if (isDark) FinFlowExtendedColors.ExpenseDark else FinFlowExtendedColors.ExpenseLight
+
     val percentage = if (totalExpense > 0) (summary.totalAmount / totalExpense) else 0.0
     val color = CategoryIconHelper.parseColorHex(summary.colorHex)
     val icon = CategoryIconHelper.getIconByName(summary.iconName)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
-            modifier = Modifier.padding(14.dp)
+            modifier = Modifier.padding(Spacing.s + Spacing.xs)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -249,37 +253,36 @@ fun CategoryExpenseProgressCard(
                     )
                 }
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(Spacing.s + Spacing.xs))
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = summary.categoryName,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
+                        style = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        text = String.format(Locale.getDefault(), "%.1f%% від усіх витрат", percentage * 100),
-                        fontSize = 12.sp,
-                        color = Color.Gray
+                        text = String.format(Locale.getDefault(), "%.1f%%", percentage * 100),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.outline
                     )
                 }
 
                 Text(
-                    text = String.format(Locale.getDefault(), "%.2f ₴", summary.totalAmount),
-                    fontSize = 16.sp,
+                    text = CurrencyFormatter.formatAmount(summary.totalAmount, currencySymbol),
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFFC62828)
+                    color = expenseColor
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.s))
 
             LinearProgressIndicator(
                 progress = { percentage.toFloat() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp)),
+                    .clip(MaterialTheme.shapes.extraSmall),
                 color = color,
                 trackColor = color.copy(alpha = 0.15f)
             )

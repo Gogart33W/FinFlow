@@ -1,7 +1,9 @@
 package com.gogart.finflow.presentation.ui
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,13 +18,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -54,12 +56,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.gogart.finflow.R
 import com.gogart.finflow.data.local.entity.TransactionEntity
 import com.gogart.finflow.data.local.entity.TransactionWithCategory
 import com.gogart.finflow.presentation.ui.util.CategoryIconHelper
+import com.gogart.finflow.presentation.ui.util.CurrencyFormatter
 import com.gogart.finflow.presentation.viewmodel.TransactionViewModel
+import com.gogart.finflow.ui.theme.FinFlowExtendedColors
+import com.gogart.finflow.ui.theme.Spacing
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -99,8 +103,7 @@ fun MainScreen(viewModel: TransactionViewModel) {
                 title = {
                     Text(
                         text = stringResource(R.string.app_name),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp
+                        style = MaterialTheme.typography.titleLarge
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -115,12 +118,13 @@ fun MainScreen(viewModel: TransactionViewModel) {
                     editingTransaction = null
                     showBottomSheet = true
                 },
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = MaterialTheme.colorScheme.primary,
+                shape = MaterialTheme.shapes.large
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = stringResource(R.string.add_transaction),
-                    tint = Color.White
+                    tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
         }
@@ -129,9 +133,9 @@ fun MainScreen(viewModel: TransactionViewModel) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = Spacing.m)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.m))
 
             // Balance Summary Card
             BalanceCard(
@@ -140,49 +144,68 @@ fun MainScreen(viewModel: TransactionViewModel) {
                 totalExpense = totalExpense
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.m))
 
             // Filter Chips
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.s),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 TransactionFilter.entries.forEach { item ->
                     FilterChip(
                         selected = filter == item,
                         onClick = { filter = item },
-                        label = { Text(stringResource(item.stringResId)) }
+                        label = { Text(stringResource(item.stringResId), style = MaterialTheme.typography.labelLarge) },
+                        shape = MaterialTheme.shapes.small
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.s))
 
             // Transactions Header
             Text(
                 text = stringResource(R.string.transaction_history, filteredTransactions.size),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(vertical = 8.dp)
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(vertical = Spacing.s)
             )
 
             if (filteredTransactions.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(32.dp),
+                        .padding(Spacing.xl),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = stringResource(R.string.empty_transactions),
-                        color = Color.Gray,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ReceiptLong,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.outline,
+                                modifier = Modifier.size(36.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(Spacing.m))
+                        Text(
+                            text = stringResource(R.string.empty_transactions),
+                            color = MaterialTheme.colorScheme.outline,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.s),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(
@@ -210,22 +233,22 @@ fun MainScreen(viewModel: TransactionViewModel) {
                             state = dismissState,
                             backgroundContent = {
                                 val color = when (dismissState.dismissDirection) {
-                                    SwipeToDismissBoxValue.EndToStart -> Color(0xFFE53935)
-                                    SwipeToDismissBoxValue.StartToEnd -> Color(0xFF2196F3)
+                                    SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.error
+                                    SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primary
                                     else -> Color.Transparent
                                 }
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .clip(RoundedCornerShape(12.dp))
+                                        .clip(MaterialTheme.shapes.medium)
                                         .background(color)
-                                        .padding(horizontal = 20.dp),
+                                        .padding(horizontal = Spacing.m),
                                     contentAlignment = if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) Alignment.CenterEnd else Alignment.CenterStart
                                 ) {
                                     if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
-                                        Icon(Icons.Default.Delete, contentDescription = null, tint = Color.White)
+                                        Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.onError)
                                     } else if (dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) {
-                                        Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White)
+                                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_transaction), tint = MaterialTheme.colorScheme.onPrimary)
                                     }
                                 }
                             }
@@ -272,8 +295,8 @@ fun MainScreen(viewModel: TransactionViewModel) {
         deletingTransaction?.let { tx ->
             AlertDialog(
                 onDismissRequest = { deletingTransaction = null },
-                title = { Text(stringResource(R.string.delete_confirm_title)) },
-                text = { Text(stringResource(R.string.delete_confirm_msg, tx.title)) },
+                title = { Text(stringResource(R.string.delete_confirm_title), style = MaterialTheme.typography.titleMedium) },
+                text = { Text(stringResource(R.string.delete_confirm_msg, tx.title), style = MaterialTheme.typography.bodyMedium) },
                 confirmButton = {
                     TextButton(
                         onClick = {
@@ -281,12 +304,12 @@ fun MainScreen(viewModel: TransactionViewModel) {
                             deletingTransaction = null
                         }
                     ) {
-                        Text(stringResource(R.string.delete), color = Color(0xFFC62828))
+                        Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { deletingTransaction = null }) {
-                        Text(stringResource(R.string.cancel))
+                        Text(stringResource(R.string.cancel), style = MaterialTheme.typography.labelLarge)
                     }
                 }
             )
@@ -300,29 +323,38 @@ fun BalanceCard(
     totalIncome: Double,
     totalExpense: Double
 ) {
+    val currencySymbol = stringResource(R.string.currency_symbol)
+    val isDark = isSystemInDarkTheme()
+
+    val incomeColor = if (isDark) FinFlowExtendedColors.IncomeDark else FinFlowExtendedColors.IncomeLight
+    val expenseColor = if (isDark) FinFlowExtendedColors.ExpenseDark else FinFlowExtendedColors.ExpenseLight
+
+    val animatedBalance by animateFloatAsState(targetValue = totalBalance.toFloat(), label = "balanceAnimation")
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp)
+            modifier = Modifier.padding(Spacing.m)
         ) {
             Text(
                 text = stringResource(R.string.total_balance),
-                fontSize = 14.sp,
-                color = Color.Gray
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.outline
             )
+
+            Spacer(modifier = Modifier.height(Spacing.xs))
 
             Text(
-                text = String.format(Locale.getDefault(), "%.2f ₴", totalBalance),
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (totalBalance >= 0) MaterialTheme.colorScheme.onSurface else Color(0xFFC62828)
+                text = CurrencyFormatter.formatAmount(animatedBalance.toDouble(), currencySymbol),
+                style = MaterialTheme.typography.headlineLarge,
+                color = if (animatedBalance >= 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.m))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -334,24 +366,23 @@ fun BalanceCard(
                         modifier = Modifier
                             .size(36.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFE8F5E9)),
+                            .background(incomeColor.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.ArrowUpward,
                             contentDescription = stringResource(R.string.incomes),
-                            tint = Color(0xFF2E7D32),
+                            tint = incomeColor,
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(Spacing.s))
                     Column {
-                        Text(stringResource(R.string.incomes), fontSize = 12.sp, color = Color.Gray)
+                        Text(stringResource(R.string.incomes), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
                         Text(
-                            text = String.format(Locale.getDefault(), "+%.2f ₴", totalIncome),
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF2E7D32)
+                            text = CurrencyFormatter.formatAmount(totalIncome, currencySymbol),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = incomeColor
                         )
                     }
                 }
@@ -362,24 +393,23 @@ fun BalanceCard(
                         modifier = Modifier
                             .size(36.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFFFEBEE)),
+                            .background(expenseColor.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.ArrowDownward,
                             contentDescription = stringResource(R.string.expenses),
-                            tint = Color(0xFFC62828),
+                            tint = expenseColor,
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(Spacing.s))
                     Column {
-                        Text(stringResource(R.string.expenses), fontSize = 12.sp, color = Color.Gray)
+                        Text(stringResource(R.string.expenses), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
                         Text(
-                            text = String.format(Locale.getDefault(), "-%.2f ₴", totalExpense),
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFFC62828)
+                            text = CurrencyFormatter.formatAmount(totalExpense, currencySymbol),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = expenseColor
                         )
                     }
                 }
@@ -396,8 +426,15 @@ fun TransactionItemCard(
 ) {
     val transaction = item.transaction
     val category = item.category
+    val currencySymbol = stringResource(R.string.currency_symbol)
+    val isDark = isSystemInDarkTheme()
+
     val categoryColor = CategoryIconHelper.parseColorHex(category.colorHex)
     val categoryIcon = CategoryIconHelper.getIconByName(category.iconName)
+
+    val incomeColor = if (isDark) FinFlowExtendedColors.IncomeDark else FinFlowExtendedColors.IncomeLight
+    val expenseColor = if (isDark) FinFlowExtendedColors.ExpenseDark else FinFlowExtendedColors.ExpenseLight
+    val amountColor = if (transaction.isIncome) incomeColor else expenseColor
 
     val dateFormat = remember { SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()) }
     val formattedDate = dateFormat.format(Date(transaction.timestamp))
@@ -406,14 +443,14 @@ fun TransactionItemCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(Spacing.s + Spacing.xs),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -431,38 +468,35 @@ fun TransactionItemCard(
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(Spacing.s + Spacing.xs))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = transaction.title,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
+                    style = MaterialTheme.typography.titleMedium
                 )
                 Text(
                     text = "${category.name} • $formattedDate",
-                    fontSize = 12.sp,
-                    color = Color.Gray
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline
                 )
             }
 
             Text(
-                text = String.format(
-                    Locale.getDefault(),
-                    "%s%.2f ₴",
-                    if (transaction.isIncome) "+" else "-",
-                    transaction.amount
-                ),
-                fontSize = 16.sp,
+                text = "${if (transaction.isIncome) "+" else "-"}${CurrencyFormatter.formatAmount(transaction.amount, currencySymbol)}",
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (transaction.isIncome) Color(0xFF2E7D32) else Color(0xFFC62828)
+                color = amountColor
             )
 
-            IconButton(onClick = onDelete) {
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier.size(48.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = stringResource(R.string.delete),
-                    tint = Color.Gray
+                    tint = MaterialTheme.colorScheme.outline
                 )
             }
         }

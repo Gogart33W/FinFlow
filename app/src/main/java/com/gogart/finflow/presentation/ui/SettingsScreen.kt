@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -60,12 +59,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.os.LocaleListCompat
 import com.gogart.finflow.R
 import com.gogart.finflow.data.backup.BackupData
 import com.gogart.finflow.presentation.viewmodel.SettingsViewModel
 import com.gogart.finflow.presentation.viewmodel.ThemeMode
+import com.gogart.finflow.ui.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,8 +73,10 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
     val themeMode by viewModel.themeMode.collectAsState()
     val isDynamicColorEnabled by viewModel.isDynamicColorEnabled.collectAsState()
     val backupPreview by viewModel.backupDataPreview.collectAsState()
+    
     val snackbarHostState = remember { SnackbarHostState() }
     var showPinDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         viewModel.messageEvent.collect { msgKey ->
             val message = when (msgKey) {
@@ -111,8 +112,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 title = {
                     Text(
                         text = stringResource(R.string.nav_settings),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp
+                        style = MaterialTheme.typography.titleLarge
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -127,24 +127,23 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp)
+                .padding(Spacing.m)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(Spacing.m)
         ) {
             // Appearance Section
             Text(
                 text = stringResource(R.string.theme_label),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(Spacing.m)) {
                     
                     // Language Switcher
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -152,17 +151,16 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                             imageVector = Icons.Default.Language,
                             contentDescription = null,
                             modifier = Modifier.size(24.dp),
-                            tint = Color.Gray
+                            tint = MaterialTheme.colorScheme.outline
                         )
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.width(Spacing.m))
                         Text(
                             text = stringResource(R.string.language_label),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
+                            style = MaterialTheme.typography.titleMedium
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(Spacing.m))
                     
                     val currentLocales = AppCompatDelegate.getApplicationLocales()
                     val currentLanguage = currentLocales.toLanguageTags().let { 
@@ -179,7 +177,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                             },
                             shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
                         ) {
-                            Text("Українська")
+                            Text("Українська", style = MaterialTheme.typography.labelLarge)
                         }
                         SegmentedButton(
                             selected = currentLanguage == 1,
@@ -188,28 +186,27 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                             },
                             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
                         ) {
-                            Text("English")
+                            Text("English", style = MaterialTheme.typography.labelLarge)
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(Spacing.l))
                     
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.DarkMode,
                             contentDescription = null,
                             modifier = Modifier.size(24.dp),
-                            tint = Color.Gray
+                            tint = MaterialTheme.colorScheme.outline
                         )
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.width(Spacing.m))
                         Text(
                             text = stringResource(R.string.theme_label),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
+                            style = MaterialTheme.typography.titleMedium
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(Spacing.m))
 
                     val sysStr = stringResource(R.string.theme_system)
                     val lightStr = stringResource(R.string.theme_light)
@@ -237,12 +234,12 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                                 },
                                 shape = SegmentedButtonDefaults.itemShape(index = index, count = themeOptions.size)
                             ) {
-                                Text(label)
+                                Text(label, style = MaterialTheme.typography.labelLarge)
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(Spacing.m))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -254,19 +251,18 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                                 imageVector = Icons.Default.ColorLens,
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp),
-                                tint = Color.Gray
+                                tint = MaterialTheme.colorScheme.outline
                             )
-                            Spacer(modifier = Modifier.width(16.dp))
+                            Spacer(modifier = Modifier.width(Spacing.m))
                             Column {
                                 Text(
                                     text = stringResource(R.string.dynamic_color_label),
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.SemiBold
+                                    style = MaterialTheme.typography.titleMedium
                                 )
                                 Text(
                                     text = stringResource(R.string.dynamic_color_desc),
-                                    fontSize = 12.sp,
-                                    color = Color.Gray
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.outline
                                 )
                             }
                         }
@@ -279,25 +275,24 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.s))
 
             // Security Section
             Text(
                 text = stringResource(R.string.security_title),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(Spacing.m),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -306,73 +301,71 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                             imageVector = Icons.Default.Lock,
                             contentDescription = null,
                             modifier = Modifier.size(24.dp),
-                            tint = Color.Gray
+                            tint = MaterialTheme.colorScheme.outline
                         )
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.width(Spacing.m))
                         Column {
                             Text(
                                 text = stringResource(R.string.pin_label),
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold
+                                style = MaterialTheme.typography.titleMedium
                             )
                             Text(
                                 text = stringResource(if (isPinSet) R.string.pin_set else R.string.pin_not_set),
-                                fontSize = 14.sp,
-                                color = if (isPinSet) Color(0xFF388E3C) else Color.Gray
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isPinSet) Color(0xFF388E3C) else MaterialTheme.colorScheme.outline
                             )
                         }
                     }
                     Button(onClick = { showPinDialog = true }) {
-                        Text(stringResource(if (isPinSet) R.string.pin_change else R.string.pin_setup))
+                        Text(stringResource(if (isPinSet) R.string.pin_change else R.string.pin_setup), style = MaterialTheme.typography.labelLarge)
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.s))
 
             // Data Section
             Text(
                 text = stringResource(R.string.backup_title),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(Spacing.m)) {
                     Button(
                         onClick = { exportLauncher.launch("finflow_backup_${System.currentTimeMillis()}.json") },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(Icons.Default.Upload, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.export_data))
+                        Spacer(modifier = Modifier.width(Spacing.s))
+                        Text(stringResource(R.string.export_data), style = MaterialTheme.typography.labelLarge)
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(Spacing.m))
 
                     Button(
                         onClick = { importLauncher.launch(arrayOf("application/json", "*/*")) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(Icons.Default.Download, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.import_data))
+                        Spacer(modifier = Modifier.width(Spacing.s))
+                        Text(stringResource(R.string.import_data), style = MaterialTheme.typography.labelLarge)
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Spacing.s))
                     Text(
                         text = stringResource(R.string.import_warning),
-                        fontSize = 12.sp,
-                        color = Color.Gray
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.outline
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(Spacing.xl))
         }
 
         if (showPinDialog) {
@@ -409,18 +402,19 @@ fun ImportConfirmDialog(
 ) {
     AlertDialog(
         onDismissRequest = onCancel,
-        title = { Text(stringResource(R.string.import_confirm_title)) },
+        title = { Text(stringResource(R.string.import_confirm_title), style = MaterialTheme.typography.titleMedium) },
         text = {
             Column {
-                Text(stringResource(R.string.import_confirm_desc))
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(stringResource(R.string.import_confirm_accounts, backupData.accounts.size))
-                Text(stringResource(R.string.import_confirm_categories, backupData.categories.size))
-                Text(stringResource(R.string.import_confirm_transactions, backupData.transactions.size))
-                Text(stringResource(R.string.import_confirm_budgets, backupData.budgets.size))
-                Spacer(modifier = Modifier.height(16.dp))
+                Text(stringResource(R.string.import_confirm_desc), style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(Spacing.s))
+                Text(stringResource(R.string.import_confirm_accounts, backupData.accounts.size), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.import_confirm_categories, backupData.categories.size), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.import_confirm_transactions, backupData.transactions.size), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.import_confirm_budgets, backupData.budgets.size), style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(Spacing.m))
                 Text(
                     text = stringResource(R.string.import_confirm_warning),
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -449,11 +443,11 @@ fun SetPinDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.security_title)) },
+        title = { Text(stringResource(R.string.security_title), style = MaterialTheme.typography.titleMedium) },
         text = {
             Column {
-                Text(stringResource(R.string.pin_setup_desc))
-                Spacer(modifier = Modifier.height(16.dp))
+                Text(stringResource(R.string.pin_setup_desc), style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(Spacing.m))
                 OutlinedTextField(
                     value = pin,
                     onValueChange = {
@@ -486,7 +480,7 @@ fun SetPinDialog(
         dismissButton = {
             if (onRemove != null) {
                 TextButton(onClick = onRemove) {
-                    Text(stringResource(R.string.remove_pin), color = Color(0xFFD32F2F))
+                    Text(stringResource(R.string.remove_pin), color = MaterialTheme.colorScheme.error)
                 }
             } else {
                 TextButton(onClick = onDismiss) {

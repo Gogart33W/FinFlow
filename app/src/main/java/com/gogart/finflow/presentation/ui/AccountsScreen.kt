@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
@@ -55,19 +54,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.gogart.finflow.R
-import com.gogart.finflow.data.local.entity.AccountEntity
 import com.gogart.finflow.data.local.entity.AccountType
 import com.gogart.finflow.data.local.entity.AccountWithBalance
 import com.gogart.finflow.presentation.ui.util.CategoryIconHelper
+import com.gogart.finflow.presentation.ui.util.CurrencyFormatter
 import com.gogart.finflow.presentation.viewmodel.AccountViewModel
-import java.util.Locale
+import com.gogart.finflow.ui.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,8 +81,7 @@ fun AccountsScreen(accountViewModel: AccountViewModel) {
                 title = {
                     Text(
                         text = stringResource(R.string.accounts_title),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp
+                        style = MaterialTheme.typography.titleLarge
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -97,12 +93,13 @@ fun AccountsScreen(accountViewModel: AccountViewModel) {
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddBottomSheet = true },
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = MaterialTheme.colorScheme.primary,
+                shape = MaterialTheme.shapes.large
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = stringResource(R.string.add_account),
-                    tint = Color.White
+                    tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
         }
@@ -111,12 +108,12 @@ fun AccountsScreen(accountViewModel: AccountViewModel) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = Spacing.m)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.m))
 
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.s + Spacing.xs),
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(
@@ -154,11 +151,11 @@ fun AccountsScreen(accountViewModel: AccountViewModel) {
         if (showCannotDeleteDialog) {
             AlertDialog(
                 onDismissRequest = { showCannotDeleteDialog = false },
-                title = { Text(stringResource(R.string.cannot_delete_account_title)) },
-                text = { Text(stringResource(R.string.cannot_delete_account_msg)) },
+                title = { Text(stringResource(R.string.cannot_delete_account_title), style = MaterialTheme.typography.titleMedium) },
+                text = { Text(stringResource(R.string.cannot_delete_account_msg), style = MaterialTheme.typography.bodyMedium) },
                 confirmButton = {
                     TextButton(onClick = { showCannotDeleteDialog = false }) {
-                        Text(stringResource(R.string.ok))
+                        Text(stringResource(R.string.ok), style = MaterialTheme.typography.labelLarge)
                     }
                 }
             )
@@ -172,6 +169,7 @@ fun AccountCardItem(
     onDelete: () -> Unit
 ) {
     val account = accountWithBalance.account
+    val currencySymbol = stringResource(R.string.currency_symbol)
     val color = CategoryIconHelper.parseColorHex(account.colorHex)
 
     val icon = when (account.type) {
@@ -184,14 +182,14 @@ fun AccountCardItem(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(Spacing.m),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -209,48 +207,49 @@ fun AccountCardItem(
                 )
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(Spacing.m))
 
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = account.name,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.titleLarge
                     )
                     if (account.isDefault) {
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(Spacing.s))
                         Text(
                             text = "(Основний)",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Medium
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
 
                 Text(
                     text = account.type.title,
-                    fontSize = 13.sp,
-                    color = Color.Gray
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(Spacing.xs))
 
                 Text(
-                    text = String.format(Locale.getDefault(), "%.2f ₴", accountWithBalance.currentBalance),
-                    fontSize = 20.sp,
+                    text = CurrencyFormatter.formatAmount(accountWithBalance.currentBalance, currencySymbol),
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.ExtraBold,
-                    color = if (accountWithBalance.currentBalance >= 0) MaterialTheme.colorScheme.onSurface else Color(0xFFC62828)
+                    color = if (accountWithBalance.currentBalance >= 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error
                 )
             }
 
             if (!account.isDefault) {
-                IconButton(onClick = onDelete) {
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.size(48.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = stringResource(R.string.delete),
-                        tint = Color.Gray
+                        tint = MaterialTheme.colorScheme.outline
                     )
                 }
             }
@@ -280,13 +279,12 @@ fun AddAccountBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .padding(horizontal = Spacing.m + Spacing.xs, vertical = Spacing.s + Spacing.xs)
         ) {
             Text(
                 text = stringResource(R.string.add_account),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 16.dp)
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = Spacing.m)
             )
 
             OutlinedTextField(
@@ -301,7 +299,7 @@ fun AddAccountBottomSheet(
                 isError = isError && name.isBlank()
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Spacing.s + Spacing.xs))
 
             OutlinedTextField(
                 value = initialBalanceText,
@@ -317,45 +315,43 @@ fun AddAccountBottomSheet(
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.m))
 
             Text(
                 text = stringResource(R.string.account_type_label),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(bottom = 8.dp)
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(bottom = Spacing.s)
             )
 
             FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.s),
+                verticalArrangement = Arrangement.spacedBy(Spacing.s),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 AccountType.entries.forEach { type ->
                     FilterChip(
                         selected = type == selectedType,
                         onClick = { selectedType = type },
-                        label = { Text(type.title) }
+                        label = { Text(type.title) },
+                        shape = MaterialTheme.shapes.small
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.m))
 
             Text(
                 text = "Колір рахунку:",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(bottom = 8.dp)
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(bottom = Spacing.s)
             )
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.s + Spacing.xs),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 colors.forEach { colorHex ->
                     val color = CategoryIconHelper.parseColorHex(colorHex)
-                    val isSelected = colorHex == selectedColorHex
                     Box(
                         modifier = Modifier
                             .size(36.dp)
@@ -371,11 +367,11 @@ fun AddAccountBottomSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Spacing.l))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.s + Spacing.xs)
             ) {
                 OutlinedButton(
                     onClick = onDismiss,
@@ -400,7 +396,7 @@ fun AddAccountBottomSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Spacing.l))
         }
     }
 }
