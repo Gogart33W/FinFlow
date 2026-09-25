@@ -6,29 +6,19 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-import androidx.compose.ui.text.googlefonts.GoogleFont
-import androidx.compose.ui.text.googlefonts.Font
+import androidx.compose.ui.text.font.Font
 import com.gogart.finflow.R
 
-val provider = GoogleFont.Provider(
-    providerAuthority = "com.google.android.gms.fonts",
-    providerPackage = "com.google.android.gms",
-    certificates = R.array.com_google_android_gms_fonts_certs
-)
-
-val ManropeFont = GoogleFont("Manrope")
-val InterFont = GoogleFont("Inter")
-
 val HeadingFontFamily = FontFamily(
-    Font(googleFont = ManropeFont, fontProvider = provider, weight = FontWeight.Normal),
-    Font(googleFont = ManropeFont, fontProvider = provider, weight = FontWeight.Medium),
-    Font(googleFont = ManropeFont, fontProvider = provider, weight = FontWeight.SemiBold),
-    Font(googleFont = ManropeFont, fontProvider = provider, weight = FontWeight.Bold)
+    Font(R.font.manrope_regular, FontWeight.Normal),
+    Font(R.font.manrope_medium, FontWeight.Medium),
+    Font(R.font.manrope_semibold, FontWeight.SemiBold),
+    Font(R.font.manrope_bold, FontWeight.Bold)
 )
 
 val BodyFontFamily = FontFamily(
-    Font(googleFont = InterFont, fontProvider = provider, weight = FontWeight.Normal),
-    Font(googleFont = InterFont, fontProvider = provider, weight = FontWeight.Medium)
+    Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_medium, FontWeight.Medium)
 )
 
 val Typography = Typography(
