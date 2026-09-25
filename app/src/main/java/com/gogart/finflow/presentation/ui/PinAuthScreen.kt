@@ -31,13 +31,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.gogart.finflow.R
 import com.gogart.finflow.presentation.viewmodel.SettingsViewModel
+import com.gogart.finflow.ui.theme.Spacing
 
 @Composable
 fun PinAuthScreen(viewModel: SettingsViewModel) {
@@ -60,7 +60,7 @@ fun PinAuthScreen(viewModel: SettingsViewModel) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(32.dp),
+                .padding(Spacing.xl),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -79,24 +79,23 @@ fun PinAuthScreen(viewModel: SettingsViewModel) {
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Spacing.l))
 
             Text(
-                text = "FinFlow",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.ExtraBold,
+                text = stringResource(R.string.app_name),
+                style = MaterialTheme.typography.displaySmall,
                 color = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.s))
 
             Text(
-                text = "Введіть PIN-код для входу",
-                fontSize = 16.sp,
-                color = Color.Gray
+                text = stringResource(R.string.enter_pin),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.outline
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(Spacing.xl))
 
             OutlinedTextField(
                 value = pin,
@@ -114,13 +113,13 @@ fun PinAuthScreen(viewModel: SettingsViewModel) {
                 modifier = Modifier.fillMaxWidth(0.6f)
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Spacing.l))
 
             Button(
                 onClick = { if (pin.length == 4) viewModel.authenticate(pin) },
                 enabled = pin.length == 4
             ) {
-                Text("Увійти")
+                Text(stringResource(R.string.ok), style = MaterialTheme.typography.labelLarge)
             }
         }
     }

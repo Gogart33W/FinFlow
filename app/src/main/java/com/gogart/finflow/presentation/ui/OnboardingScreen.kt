@@ -31,12 +31,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.gogart.finflow.R
 import com.gogart.finflow.presentation.viewmodel.SettingsViewModel
+import com.gogart.finflow.ui.theme.Spacing
 import kotlinx.coroutines.launch
 
 data class OnboardingPage(
@@ -92,18 +91,17 @@ fun OnboardingScreen(viewModel: SettingsViewModel) {
                             tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(Spacing.xl))
                     Text(
                         text = stringResource(page.titleResId),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.headlineMedium,
                         color = MaterialTheme.colorScheme.primary,
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(Spacing.m))
                     Text(
                         text = stringResource(page.descResId),
-                        fontSize = 16.sp,
+                        style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
@@ -121,7 +119,7 @@ fun OnboardingScreen(viewModel: SettingsViewModel) {
                     val color = if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
                     Box(
                         modifier = Modifier
-                            .padding(4.dp)
+                            .padding(Spacing.xs)
                             .clip(CircleShape)
                             .background(color)
                             .size(8.dp)
@@ -133,12 +131,12 @@ fun OnboardingScreen(viewModel: SettingsViewModel) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 32.dp),
+                    .padding(horizontal = Spacing.xl),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = { viewModel.completeOnboarding() }) {
-                    Text(stringResource(R.string.onboarding_skip))
+                    Text(stringResource(R.string.onboarding_skip), style = MaterialTheme.typography.labelLarge)
                 }
 
                 Button(
@@ -153,10 +151,11 @@ fun OnboardingScreen(viewModel: SettingsViewModel) {
                     }
                 ) {
                     Text(
-                        if (pagerState.currentPage == pages.lastIndex) 
+                        text = if (pagerState.currentPage == pages.lastIndex) 
                             stringResource(R.string.onboarding_start) 
                         else 
-                            stringResource(R.string.onboarding_next)
+                            stringResource(R.string.onboarding_next),
+                        style = MaterialTheme.typography.labelLarge
                     )
                 }
             }

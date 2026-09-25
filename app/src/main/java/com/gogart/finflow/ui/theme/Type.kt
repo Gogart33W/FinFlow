@@ -6,10 +6,30 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Temporary standard fonts until we setup Downloadable Fonts correctly.
-// For now, using sans-serif for Body and serif-monospace for distinct headings if needed.
-val HeadingFontFamily = FontFamily.SansSerif
-val BodyFontFamily = FontFamily.SansSerif
+import androidx.compose.ui.text.googlefonts.GoogleFont
+import androidx.compose.ui.text.googlefonts.Font
+import com.gogart.finflow.R
+
+val provider = GoogleFont.Provider(
+    providerAuthority = "com.google.android.gms.fonts",
+    providerPackage = "com.google.android.gms",
+    certificates = R.array.com_google_android_gms_fonts_certs
+)
+
+val ManropeFont = GoogleFont("Manrope")
+val InterFont = GoogleFont("Inter")
+
+val HeadingFontFamily = FontFamily(
+    Font(googleFont = ManropeFont, fontProvider = provider, weight = FontWeight.Normal),
+    Font(googleFont = ManropeFont, fontProvider = provider, weight = FontWeight.Medium),
+    Font(googleFont = ManropeFont, fontProvider = provider, weight = FontWeight.SemiBold),
+    Font(googleFont = ManropeFont, fontProvider = provider, weight = FontWeight.Bold)
+)
+
+val BodyFontFamily = FontFamily(
+    Font(googleFont = InterFont, fontProvider = provider, weight = FontWeight.Normal),
+    Font(googleFont = InterFont, fontProvider = provider, weight = FontWeight.Medium)
+)
 
 val Typography = Typography(
     displayLarge = TextStyle(

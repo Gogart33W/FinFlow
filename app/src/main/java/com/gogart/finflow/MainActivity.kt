@@ -129,7 +129,10 @@ fun MainNavigationApp(
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(
+                top = innerPadding.calculateTopPadding(),
+                bottom = innerPadding.calculateBottomPadding()
+            )
         ) {
             composable(Screen.Home.route) {
                 MainScreen(viewModel = transactionViewModel)
