@@ -83,6 +83,7 @@ fun MainScreen(viewModel: TransactionViewModel) {
     val totalBalance by viewModel.totalBalance.collectAsState()
     val totalIncome by viewModel.totalIncome.collectAsState()
     val totalExpense by viewModel.totalExpense.collectAsState()
+    val currencySymbol by viewModel.currencySymbol.collectAsState()
 
     var filter by remember { mutableStateOf(TransactionFilter.ALL) }
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -141,7 +142,8 @@ fun MainScreen(viewModel: TransactionViewModel) {
             BalanceCard(
                 totalBalance = totalBalance,
                 totalIncome = totalIncome,
-                totalExpense = totalExpense
+                totalExpense = totalExpense,
+                currencySymbol = currencySymbol
             )
 
             Spacer(modifier = Modifier.height(Spacing.m))
@@ -255,6 +257,7 @@ fun MainScreen(viewModel: TransactionViewModel) {
                         ) {
                             TransactionItemCard(
                                 item = item,
+                                currencySymbol = currencySymbol,
                                 onClick = {
                                     editingTransaction = item
                                     showBottomSheet = true
@@ -272,6 +275,7 @@ fun MainScreen(viewModel: TransactionViewModel) {
                 sheetState = sheetState,
                 categories = categories,
                 accounts = accounts,
+                currencySymbol = currencySymbol,
                 existingTransaction = editingTransaction,
                 onDismiss = {
                     showBottomSheet = false
@@ -321,9 +325,9 @@ fun MainScreen(viewModel: TransactionViewModel) {
 fun BalanceCard(
     totalBalance: Double,
     totalIncome: Double,
-    totalExpense: Double
+    totalExpense: Double,
+    currencySymbol: String
 ) {
-    val currencySymbol = stringResource(R.string.currency_symbol)
     val isDark = isSystemInDarkTheme()
 
     val incomeColor = if (isDark) FinFlowExtendedColors.IncomeDark else FinFlowExtendedColors.IncomeLight
@@ -421,12 +425,12 @@ fun BalanceCard(
 @Composable
 fun TransactionItemCard(
     item: TransactionWithCategory,
+    currencySymbol: String,
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
     val transaction = item.transaction
     val category = item.category
-    val currencySymbol = stringResource(R.string.currency_symbol)
     val isDark = isSystemInDarkTheme()
 
     val categoryColor = CategoryIconHelper.parseColorHex(category.colorHex)

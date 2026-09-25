@@ -18,6 +18,7 @@ class SecurityManager(private val context: Context) {
     private val onboardingKey = booleanPreferencesKey("onboarding_completed")
     private val themeModeKey = stringPreferencesKey("theme_mode")
     private val dynamicColorKey = booleanPreferencesKey("dynamic_color")
+    private val currencySymbolKey = stringPreferencesKey("currency_symbol")
 
     val isPinSet: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[pinKey] != null
@@ -35,6 +36,10 @@ class SecurityManager(private val context: Context) {
         preferences[dynamicColorKey] ?: false
     }
 
+    val currencySymbol: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[currencySymbolKey] ?: "₴"
+    }
+
     suspend fun setThemeMode(mode: String) {
         context.dataStore.edit { preferences ->
             preferences[themeModeKey] = mode
@@ -44,6 +49,12 @@ class SecurityManager(private val context: Context) {
     suspend fun setDynamicColorEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[dynamicColorKey] = enabled
+        }
+    }
+
+    suspend fun setCurrencySymbol(symbol: String) {
+        context.dataStore.edit { preferences ->
+            preferences[currencySymbolKey] = symbol
         }
     }
 

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.gogart.finflow.data.local.entity.CategoryExpenseSummary
 import com.gogart.finflow.data.local.entity.PeriodSummary
 import com.gogart.finflow.data.repository.TransactionRepository
+import com.gogart.finflow.data.preferences.SecurityManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,7 +23,17 @@ enum class TimePeriod(val title: String) {
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class StatisticsViewModel(private val repository: TransactionRepository) : ViewModel() {
+class StatisticsViewModel(
+    private val repository: TransactionRepository,
+    private val securityManager: SecurityManager
+) : ViewModel() {
+
+    val currencySymbol: StateFlow<String> = securityManager.currencySymbol
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = "₴"
+        )
 
     val selectedPeriod = MutableStateFlow(TimePeriod.MONTH)
 
@@ -74,12 +85,14 @@ class StatisticsViewModel(private val repository: TransactionRepository) : ViewM
     }
 }
 
-class StatisticsViewModelFactory(private val repository: TransactionRepository) :
-    ViewModelProvider.Factory {
+class StatisticsViewModelFactory(
+    private val repository: TransactionRepository,
+    private val securityManager: SecurityManager
+) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(StatisticsViewModel::class.java)) {
-            return StatisticsViewModel(repository) as T
+            return StatisticsViewModel(repository, securityManager) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

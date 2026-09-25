@@ -11,6 +11,7 @@ import com.gogart.finflow.data.repository.AccountRepository
 import com.gogart.finflow.data.repository.BudgetRepository
 import com.gogart.finflow.data.repository.CategoryRepository
 import com.gogart.finflow.data.repository.TransactionRepository
+import com.gogart.finflow.data.preferences.SecurityManager
 import com.gogart.finflow.presentation.util.NotificationHelper
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -27,8 +28,16 @@ class TransactionViewModel(
     private val categoryRepository: CategoryRepository,
     private val accountRepository: AccountRepository,
     private val budgetRepository: BudgetRepository,
-    private val notificationHelper: NotificationHelper
+    private val notificationHelper: NotificationHelper,
+    private val securityManager: SecurityManager
 ) : ViewModel() {
+
+    val currencySymbol: StateFlow<String> = securityManager.currencySymbol
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = "₴"
+        )
 
     val transactions: StateFlow<List<TransactionWithCategory>> =
         transactionRepository.getAllTransactionsWithCategory()
@@ -145,7 +154,8 @@ class TransactionViewModelFactory(
     private val categoryRepository: CategoryRepository,
     private val accountRepository: AccountRepository,
     private val budgetRepository: BudgetRepository,
-    private val notificationHelper: NotificationHelper
+    private val notificationHelper: NotificationHelper,
+    private val securityManager: SecurityManager
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -155,7 +165,8 @@ class TransactionViewModelFactory(
                 categoryRepository,
                 accountRepository,
                 budgetRepository,
-                notificationHelper
+                notificationHelper,
+                securityManager
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

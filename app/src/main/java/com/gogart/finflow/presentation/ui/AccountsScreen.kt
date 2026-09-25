@@ -70,6 +70,7 @@ import com.gogart.finflow.ui.theme.Spacing
 @Composable
 fun AccountsScreen(accountViewModel: AccountViewModel) {
     val accountsWithBalance by accountViewModel.accountsWithBalance.collectAsState()
+    val currencySymbol by accountViewModel.currencySymbol.collectAsState()
 
     var showAddBottomSheet by remember { mutableStateOf(false) }
     var showCannotDeleteDialog by remember { mutableStateOf(false) }
@@ -122,6 +123,7 @@ fun AccountsScreen(accountViewModel: AccountViewModel) {
                 ) { item ->
                     AccountCardItem(
                         accountWithBalance = item,
+                        currencySymbol = currencySymbol,
                         onDelete = {
                             accountViewModel.deleteAccount(
                                 account = item.account,
@@ -136,6 +138,7 @@ fun AccountsScreen(accountViewModel: AccountViewModel) {
         if (showAddBottomSheet) {
             AddAccountBottomSheet(
                 sheetState = sheetState,
+                currencySymbol = currencySymbol,
                 onDismiss = { showAddBottomSheet = false },
                 onSave = { name, type, initialBalance, colorHex ->
                     accountViewModel.addAccount(
@@ -166,10 +169,10 @@ fun AccountsScreen(accountViewModel: AccountViewModel) {
 @Composable
 fun AccountCardItem(
     accountWithBalance: AccountWithBalance,
+    currencySymbol: String,
     onDelete: () -> Unit
 ) {
     val account = accountWithBalance.account
-    val currencySymbol = stringResource(R.string.currency_symbol)
     val color = CategoryIconHelper.parseColorHex(account.colorHex)
 
     val icon = when (account.type) {
@@ -261,6 +264,7 @@ fun AccountCardItem(
 @Composable
 fun AddAccountBottomSheet(
     sheetState: SheetState,
+    currencySymbol: String,
     onDismiss: () -> Unit,
     onSave: (name: String, type: AccountType, initialBalance: Double, colorHex: String) -> Unit
 ) {
@@ -309,7 +313,7 @@ fun AddAccountBottomSheet(
                         isError = false
                     }
                 },
-                label = { Text(stringResource(R.string.initial_balance_label)) },
+                label = { Text("${stringResource(R.string.initial_balance_label)} ($currencySymbol)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true

@@ -69,6 +69,7 @@ import com.gogart.finflow.ui.theme.Spacing
 fun BudgetsScreen(viewModel: BudgetViewModel) {
     val budgets by viewModel.budgetsWithSpent.collectAsState()
     val expenseCategories by viewModel.expenseCategories.collectAsState()
+    val currencySymbol by viewModel.currencySymbol.collectAsState()
 
     var showAddBottomSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -151,6 +152,7 @@ fun BudgetsScreen(viewModel: BudgetViewModel) {
                     items(items = budgets, key = { it.budget.id }) { item ->
                         BudgetCardItem(
                             budgetWithSpent = item,
+                            currencySymbol = currencySymbol,
                             onDelete = { viewModel.deleteBudget(item.budget) }
                         )
                     }
@@ -162,6 +164,7 @@ fun BudgetsScreen(viewModel: BudgetViewModel) {
             SetBudgetBottomSheet(
                 sheetState = sheetState,
                 categories = expenseCategories,
+                currencySymbol = currencySymbol,
                 onDismiss = { showAddBottomSheet = false },
                 onSave = { categoryId, limit ->
                     viewModel.setBudget(categoryId, limit)
@@ -174,9 +177,9 @@ fun BudgetsScreen(viewModel: BudgetViewModel) {
 @Composable
 fun BudgetCardItem(
     budgetWithSpent: BudgetWithSpent,
+    currencySymbol: String,
     onDelete: () -> Unit
 ) {
-    val currencySymbol = stringResource(R.string.currency_symbol)
     val category = budgetWithSpent.category
     val budget = budgetWithSpent.budget
     val spent = budgetWithSpent.spentAmount
@@ -276,6 +279,7 @@ fun BudgetCardItem(
 fun SetBudgetBottomSheet(
     sheetState: SheetState,
     categories: List<CategoryEntity>,
+    currencySymbol: String,
     onDismiss: () -> Unit,
     onSave: (categoryId: Long, limit: Double) -> Unit
 ) {
@@ -306,7 +310,7 @@ fun SetBudgetBottomSheet(
                         isError = false
                     }
                 },
-                label = { Text(stringResource(R.string.monthly_limit_label)) },
+                label = { Text("${stringResource(R.string.monthly_limit_label)} ($currencySymbol)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,

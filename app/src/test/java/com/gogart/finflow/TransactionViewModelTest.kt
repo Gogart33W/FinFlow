@@ -178,7 +178,9 @@ class TransactionViewModelTest {
         val fakeNotificationHelper = object : NotificationHelper(org.mockito.Mockito.mock(Context::class.java)) {
             override fun showBudgetWarningNotification(categoryId: Long, categoryName: String, percentage: Int) {}
         }
+        val mockSecurityManager = org.mockito.Mockito.mock(com.gogart.finflow.data.preferences.SecurityManager::class.java)
+        org.mockito.Mockito.`when`(mockSecurityManager.currencySymbol).thenReturn(MutableStateFlow("₴"))
 
-        return TransactionViewModel(transactionRepository, categoryRepository, accountRepository, budgetRepository, fakeNotificationHelper)
+        return TransactionViewModel(transactionRepository, categoryRepository, accountRepository, budgetRepository, fakeNotificationHelper, mockSecurityManager)
     }
 }

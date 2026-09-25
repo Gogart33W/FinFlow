@@ -18,10 +18,10 @@
     <string name="save">Save</string>
     <string name="save_changes">Save Changes</string>
     <string name="delete">Delete</string>
-    <string name="currency_symbol">$</string>
 
     <!-- Settings & App State -->
     <string name="language_label">App Language</string>
+    <string name="currency_label">Currency</string>
     <string name="theme_label">App Theme</string>
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>

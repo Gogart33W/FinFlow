@@ -8,6 +8,7 @@ import com.gogart.finflow.data.local.entity.BudgetWithSpent
 import com.gogart.finflow.data.local.entity.CategoryEntity
 import com.gogart.finflow.data.repository.BudgetRepository
 import com.gogart.finflow.data.repository.CategoryRepository
+import com.gogart.finflow.data.preferences.SecurityManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,8 +23,16 @@ import java.util.Locale
 @OptIn(ExperimentalCoroutinesApi::class)
 class BudgetViewModel(
     private val budgetRepository: BudgetRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val securityManager: SecurityManager
 ) : ViewModel() {
+
+    val currencySymbol: StateFlow<String> = securityManager.currencySymbol
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = "₴"
+        )
 
     private val currentYearMonthFormat = SimpleDateFormat("yyyy-MM", Locale.getDefault())
     val selectedYearMonth = MutableStateFlow(currentYearMonthFormat.format(Date()))
@@ -63,12 +72,13 @@ class BudgetViewModel(
 
 class BudgetViewModelFactory(
     private val budgetRepository: BudgetRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val securityManager: SecurityManager
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(BudgetViewModel::class.java)) {
-            return BudgetViewModel(budgetRepository, categoryRepository) as T
+            return BudgetViewModel(budgetRepository, categoryRepository, securityManager) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

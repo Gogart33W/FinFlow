@@ -52,26 +52,30 @@ class MainActivity : ComponentActivity() {
         val accountRepository = AccountRepository(database.accountDao, database.transactionDao)
         val budgetRepository = BudgetRepository(database.budgetDao)
         val notificationHelper = NotificationHelper(applicationContext)
-        TransactionViewModelFactory(transactionRepository, categoryRepository, accountRepository, budgetRepository, notificationHelper)
+        val securityManager = SecurityManager(applicationContext)
+        TransactionViewModelFactory(transactionRepository, categoryRepository, accountRepository, budgetRepository, notificationHelper, securityManager)
     }
 
     private val accountViewModel: AccountViewModel by viewModels {
         val database = AppDataBase.getDatabase(applicationContext)
         val accountRepository = AccountRepository(database.accountDao, database.transactionDao)
-        AccountViewModelFactory(accountRepository)
+        val securityManager = SecurityManager(applicationContext)
+        AccountViewModelFactory(accountRepository, securityManager)
     }
 
     private val statisticsViewModel: StatisticsViewModel by viewModels {
         val database = AppDataBase.getDatabase(applicationContext)
         val transactionRepository = TransactionRepository(database.transactionDao)
-        StatisticsViewModelFactory(transactionRepository)
+        val securityManager = SecurityManager(applicationContext)
+        StatisticsViewModelFactory(transactionRepository, securityManager)
     }
 
     private val budgetViewModel: BudgetViewModel by viewModels {
         val database = AppDataBase.getDatabase(applicationContext)
         val budgetRepository = BudgetRepository(database.budgetDao)
         val categoryRepository = CategoryRepository(database.categoryDao)
-        BudgetViewModelFactory(budgetRepository, categoryRepository)
+        val securityManager = SecurityManager(applicationContext)
+        BudgetViewModelFactory(budgetRepository, categoryRepository, securityManager)
     }
 
     private val settingsViewModel: SettingsViewModel by viewModels {

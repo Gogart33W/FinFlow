@@ -68,7 +68,9 @@ class AccountViewModelTest {
         }
 
         val repository = AccountRepository(fakeAccountDao, fakeTransactionDao)
-        val viewModel = AccountViewModel(repository)
+        val mockSecurityManager = org.mockito.Mockito.mock(com.gogart.finflow.data.preferences.SecurityManager::class.java)
+        org.mockito.Mockito.`when`(mockSecurityManager.currencySymbol).thenReturn(MutableStateFlow("₴"))
+        val viewModel = AccountViewModel(repository, mockSecurityManager)
 
         viewModel.accountsWithBalance.test {
             assertEquals(emptyList<AccountWithBalance>(), awaitItem())

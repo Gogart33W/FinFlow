@@ -54,6 +54,13 @@ class SettingsViewModel(
             initialValue = false
         )
 
+    val currencySymbol: StateFlow<String> = securityManager.currencySymbol
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = "₴"
+        )
+
     private val _messageEvent = MutableSharedFlow<String>()
     val messageEvent: SharedFlow<String> = _messageEvent
 
@@ -82,6 +89,12 @@ class SettingsViewModel(
     fun setDynamicColorEnabled(enabled: Boolean) {
         viewModelScope.launch {
             securityManager.setDynamicColorEnabled(enabled)
+        }
+    }
+
+    fun setCurrencySymbol(symbol: String) {
+        viewModelScope.launch {
+            securityManager.setCurrencySymbol(symbol)
         }
     }
 

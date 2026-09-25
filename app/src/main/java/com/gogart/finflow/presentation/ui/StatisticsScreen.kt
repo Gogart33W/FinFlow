@@ -54,6 +54,7 @@ import java.util.Locale
 fun StatisticsScreen(viewModel: StatisticsViewModel) {
     val selectedPeriod by viewModel.selectedPeriod.collectAsState()
     val expenseCategories by viewModel.expenseCategories.collectAsState()
+    val currencySymbol by viewModel.currencySymbol.collectAsState()
 
     val totalExpenseSum = expenseCategories.sumOf { it.totalAmount }
 
@@ -120,7 +121,8 @@ fun StatisticsScreen(viewModel: StatisticsViewModel) {
                     item {
                         ExpensePieChartCard(
                             totalExpense = totalExpenseSum,
-                            categories = expenseCategories
+                            categories = expenseCategories,
+                            currencySymbol = currencySymbol
                         )
                     }
 
@@ -137,7 +139,8 @@ fun StatisticsScreen(viewModel: StatisticsViewModel) {
                     itemsIndexed(expenseCategories) { _, categorySummary ->
                         CategoryExpenseProgressCard(
                             summary = categorySummary,
-                            totalExpense = totalExpenseSum
+                            totalExpense = totalExpenseSum,
+                            currencySymbol = currencySymbol
                         )
                     }
 
@@ -153,9 +156,9 @@ fun StatisticsScreen(viewModel: StatisticsViewModel) {
 @Composable
 fun ExpensePieChartCard(
     totalExpense: Double,
-    categories: List<CategoryExpenseSummary>
+    categories: List<CategoryExpenseSummary>,
+    currencySymbol: String
 ) {
-    val currencySymbol = stringResource(R.string.currency_symbol)
     val isDark = isSystemInDarkTheme()
     val expenseColor = if (isDark) FinFlowExtendedColors.ExpenseDark else FinFlowExtendedColors.ExpenseLight
 
@@ -215,9 +218,9 @@ fun ExpensePieChartCard(
 @Composable
 fun CategoryExpenseProgressCard(
     summary: CategoryExpenseSummary,
-    totalExpense: Double
+    totalExpense: Double,
+    currencySymbol: String
 ) {
-    val currencySymbol = stringResource(R.string.currency_symbol)
     val isDark = isSystemInDarkTheme()
     val expenseColor = if (isDark) FinFlowExtendedColors.ExpenseDark else FinFlowExtendedColors.ExpenseLight
 

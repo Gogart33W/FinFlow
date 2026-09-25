@@ -53,6 +53,7 @@ fun AddTransactionBottomSheet(
     sheetState: SheetState,
     categories: List<CategoryEntity>,
     accounts: List<AccountEntity>,
+    currencySymbol: String,
     existingTransaction: TransactionWithCategory? = null,
     onDismiss: () -> Unit,
     onSaveNew: (title: String, amount: Double, isIncome: Boolean, categoryId: Long, accountId: Long) -> Unit,
@@ -159,7 +160,7 @@ fun AddTransactionBottomSheet(
                         isError = false
                     }
                 },
-                label = { Text(stringResource(R.string.amount_label)) },
+                label = { Text("${stringResource(R.string.amount_label)} ($currencySymbol)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,

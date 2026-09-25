@@ -59,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.os.LocaleListCompat
 import com.gogart.finflow.R
 import com.gogart.finflow.data.backup.BackupData
@@ -187,6 +188,44 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
                         ) {
                             Text("English", style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(Spacing.l))
+                    
+                    // Currency Switcher
+                    val currencySymbol by viewModel.currencySymbol.collectAsState()
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = currencySymbol,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.outline,
+                            modifier = Modifier.width(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.m))
+                        Text(
+                            text = stringResource(R.string.currency_label),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(Spacing.m))
+
+                    val currencyOptions = listOf("₴", "$", "€", "zł")
+                    val selectedCurrencyIndex = currencyOptions.indexOf(currencySymbol).takeIf { it >= 0 } ?: 0
+
+                    SingleChoiceSegmentedButtonRow(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        currencyOptions.forEachIndexed { index, label ->
+                            SegmentedButton(
+                                selected = selectedCurrencyIndex == index,
+                                onClick = { viewModel.setCurrencySymbol(label) },
+                                shape = SegmentedButtonDefaults.itemShape(index = index, count = currencyOptions.size)
+                            ) {
+                                Text(label, style = MaterialTheme.typography.labelLarge)
+                            }
                         }
                     }
 

@@ -18,7 +18,6 @@
     <string name="save">Зберегти</string>
     <string name="save_changes">Зберегти зміни</string>
     <string name="delete">Видалити</string>
-    <string name="currency_symbol">₴</string>
 
     <!-- Navigation & Accounts -->
     <string name="nav_home">Головна</string>
@@ -46,6 +45,7 @@
 
     <!-- Settings & App State -->
     <string name="language_label">Мова додатку</string>
+    <string name="currency_label">Валюта</string>
     <string name="theme_label">Тема оформлення</string>
     <string name="theme_system">Системна</string>
     <string name="theme_light">Світла</string>
