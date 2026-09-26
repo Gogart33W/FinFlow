@@ -1,11 +1,18 @@
 package com.gogart.finflow
 
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -33,6 +40,7 @@ import com.gogart.finflow.presentation.ui.navigation.Screen
 import com.gogart.finflow.presentation.util.NotificationHelper
 import com.gogart.finflow.presentation.viewmodel.AccountViewModel
 import com.gogart.finflow.presentation.viewmodel.AccountViewModelFactory
+import com.gogart.finflow.presentation.viewmodel.AuthState
 import com.gogart.finflow.presentation.viewmodel.BudgetViewModel
 import com.gogart.finflow.presentation.viewmodel.BudgetViewModelFactory
 import com.gogart.finflow.presentation.viewmodel.SettingsViewModel
@@ -85,6 +93,10 @@ class MainActivity : ComponentActivity() {
         SettingsViewModelFactory(securityManager, backupManager)
     }
 
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {}
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -97,20 +109,36 @@ class MainActivity : ComponentActivity() {
                 dynamicColorEnabled = dynamicColor
             ) {
                 val isOnboardingCompleted by settingsViewModel.isOnboardingCompleted.collectAsState()
-                val isAuthenticated by settingsViewModel.isAuthenticated.collectAsState()
+                val authState by settingsViewModel.authState.collectAsState()
 
                 if (!isOnboardingCompleted) {
-                    OnboardingScreen(viewModel = settingsViewModel)
-                } else if (!isAuthenticated) {
-                    PinAuthScreen(viewModel = settingsViewModel)
-                } else {
-                    MainNavigationApp(
-                        transactionViewModel = transactionViewModel,
-                        accountViewModel = accountViewModel,
-                        statisticsViewModel = statisticsViewModel,
-                        budgetViewModel = budgetViewModel,
-                        settingsViewModel = settingsViewModel
+                    OnboardingScreen(
+                        viewModel = settingsViewModel,
+                        onFinished = {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                        }
                     )
+                } else {
+                    when (authState) {
+                        AuthState.Loading -> {
+                            // Blank/Splash screen
+                            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+                        }
+                        AuthState.NeedsPin -> {
+                            PinAuthScreen(viewModel = settingsViewModel)
+                        }
+                        AuthState.Authenticated -> {
+                            MainNavigationApp(
+                                transactionViewModel = transactionViewModel,
+                                accountViewModel = accountViewModel,
+                                statisticsViewModel = statisticsViewModel,
+                                budgetViewModel = budgetViewModel,
+                                settingsViewModel = settingsViewModel
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -128,15 +156,13 @@ fun MainNavigationApp(
     val navController = rememberNavController()
 
     Scaffold(
-        bottomBar = { BottomNavigationBar(navController = navController) }
+        bottomBar = { BottomNavigationBar(navController = navController) },
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(
-                top = innerPadding.calculateTopPadding(),
-                bottom = innerPadding.calculateBottomPadding()
-            )
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             composable(Screen.Home.route) {
                 MainScreen(viewModel = transactionViewModel)

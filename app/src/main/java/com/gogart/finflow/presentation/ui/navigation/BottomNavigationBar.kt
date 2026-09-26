@@ -35,7 +35,14 @@ fun BottomNavigationBar(navController: NavController) {
         items.forEach { screen ->
             NavigationBarItem(
                 icon = { Icon(imageVector = screen.icon, contentDescription = stringResource(screen.titleResId)) },
-                label = { Text(text = stringResource(screen.titleResId)) },
+                label = { 
+                    Text(
+                        text = stringResource(screen.titleResId), 
+                        maxLines = 1, 
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    ) 
+                },
+                alwaysShowLabel = false,
                 selected = currentRoute == screen.route,
                 onClick = {
                     if (currentRoute != screen.route) {

@@ -138,14 +138,14 @@ fun AccountsScreen(accountViewModel: AccountViewModel) {
         if (showAddBottomSheet) {
             AddAccountBottomSheet(
                 sheetState = sheetState,
-                currencySymbol = currencySymbol,
                 onDismiss = { showAddBottomSheet = false },
-                onSave = { name, type, initialBalance, colorHex ->
+                onSave = { name, type, initialBalance, colorHex, currency ->
                     accountViewModel.addAccount(
                         name = name,
                         type = type,
                         initialBalance = initialBalance,
-                        colorHex = colorHex
+                        colorHex = colorHex,
+                        currency = currency
                     )
                 }
             )
@@ -264,17 +264,18 @@ fun AccountCardItem(
 @Composable
 fun AddAccountBottomSheet(
     sheetState: SheetState,
-    currencySymbol: String,
     onDismiss: () -> Unit,
-    onSave: (name: String, type: AccountType, initialBalance: Double, colorHex: String) -> Unit
+    onSave: (name: String, type: AccountType, initialBalance: Double, colorHex: String, currency: String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var initialBalanceText by remember { mutableStateOf("0.0") }
     var selectedType by remember { mutableStateOf(AccountType.CARD) }
     var selectedColorHex by remember { mutableStateOf("#2196F3") }
+    var selectedCurrency by remember { mutableStateOf("₴") }
     var isError by remember { mutableStateOf(false) }
 
     val colors = listOf("#4CAF50", "#2196F3", "#9C27B0", "#FF9800", "#E91E63", "#009688", "#795548")
+    val currencies = listOf("₴", "$", "€", "zł")
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -313,7 +314,7 @@ fun AddAccountBottomSheet(
                         isError = false
                     }
                 },
-                label = { Text("${stringResource(R.string.initial_balance_label)} ($currencySymbol)") },
+                label = { Text("${stringResource(R.string.initial_balance_label)} ($selectedCurrency)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
@@ -349,6 +350,29 @@ fun AddAccountBottomSheet(
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.padding(bottom = Spacing.s)
             )
+
+            Text(
+                text = stringResource(R.string.currency_label),
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(bottom = Spacing.s)
+            )
+
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(Spacing.s),
+                verticalArrangement = Arrangement.spacedBy(Spacing.s),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                currencies.forEach { curr ->
+                    FilterChip(
+                        selected = curr == selectedCurrency,
+                        onClick = { selectedCurrency = curr },
+                        label = { Text(curr) },
+                        shape = MaterialTheme.shapes.small
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.m))
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.s + Spacing.xs),
@@ -388,7 +412,7 @@ fun AddAccountBottomSheet(
                     onClick = {
                         val initBal = initialBalanceText.toDoubleOrNull() ?: 0.0
                         if (name.isNotBlank()) {
-                            onSave(name.trim(), selectedType, initBal, selectedColorHex)
+                            onSave(name.trim(), selectedType, initBal, selectedColorHex, selectedCurrency)
                             onDismiss()
                         } else {
                             isError = true

@@ -63,6 +63,22 @@ class TransactionViewModel(
                 initialValue = emptyList()
             )
 
+    val balancesByCurrency: StateFlow<Map<String, Double>> = transactions.map { list ->
+        val map = mutableMapOf<String, Double>()
+        list.forEach { item ->
+            val account = accounts.value.find { it.id == item.transaction.accountId }
+            val currency = account?.currency ?: "UAH"
+            val currentVal = map[currency] ?: 0.0
+            val modifier = if (item.transaction.isIncome) item.transaction.amount else -item.transaction.amount
+            map[currency] = currentVal + modifier
+        }
+        map
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyMap()
+    )
+
     val totalIncome: StateFlow<Double> = transactions.map { list ->
         list.filter { it.transaction.isIncome }.sumOf { it.transaction.amount }
     }.stateIn(
@@ -73,16 +89,6 @@ class TransactionViewModel(
 
     val totalExpense: StateFlow<Double> = transactions.map { list ->
         list.filter { !it.transaction.isIncome }.sumOf { it.transaction.amount }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 0.0
-    )
-
-    val totalBalance: StateFlow<Double> = transactions.map { list ->
-        val income = list.filter { it.transaction.isIncome }.sumOf { it.transaction.amount }
-        val expense = list.filter { !it.transaction.isIncome }.sumOf { it.transaction.amount }
-        income - expense
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

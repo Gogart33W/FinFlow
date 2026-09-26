@@ -1,6 +1,5 @@
 package com.gogart.finflow.presentation.ui
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -80,7 +79,7 @@ fun MainScreen(viewModel: TransactionViewModel) {
     val transactions by viewModel.transactions.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val accounts by viewModel.accounts.collectAsState()
-    val totalBalance by viewModel.totalBalance.collectAsState()
+    val balancesByCurrency by viewModel.balancesByCurrency.collectAsState()
     val totalIncome by viewModel.totalIncome.collectAsState()
     val totalExpense by viewModel.totalExpense.collectAsState()
     val currencySymbol by viewModel.currencySymbol.collectAsState()
@@ -140,7 +139,7 @@ fun MainScreen(viewModel: TransactionViewModel) {
 
             // Balance Summary Card
             BalanceCard(
-                totalBalance = totalBalance,
+                balancesByCurrency = balancesByCurrency,
                 totalIncome = totalIncome,
                 totalExpense = totalExpense,
                 currencySymbol = currencySymbol
@@ -323,7 +322,7 @@ fun MainScreen(viewModel: TransactionViewModel) {
 
 @Composable
 fun BalanceCard(
-    totalBalance: Double,
+    balancesByCurrency: Map<String, Double>,
     totalIncome: Double,
     totalExpense: Double,
     currencySymbol: String
@@ -332,8 +331,6 @@ fun BalanceCard(
 
     val incomeColor = if (isDark) FinFlowExtendedColors.IncomeDark else FinFlowExtendedColors.IncomeLight
     val expenseColor = if (isDark) FinFlowExtendedColors.ExpenseDark else FinFlowExtendedColors.ExpenseLight
-
-    val animatedBalance by animateFloatAsState(targetValue = totalBalance.toFloat(), label = "balanceAnimation")
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -352,11 +349,21 @@ fun BalanceCard(
 
             Spacer(modifier = Modifier.height(Spacing.xs))
 
-            Text(
-                text = CurrencyFormatter.formatAmount(animatedBalance.toDouble(), currencySymbol),
-                style = MaterialTheme.typography.headlineLarge,
-                color = if (animatedBalance >= 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error
-            )
+            if (balancesByCurrency.isEmpty()) {
+                Text(
+                    text = CurrencyFormatter.formatAmount(0.0, currencySymbol),
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            } else {
+                balancesByCurrency.forEach { (currency, balance) ->
+                    Text(
+                        text = CurrencyFormatter.formatAmount(balance, currency),
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = if (balance >= 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(Spacing.m))
 

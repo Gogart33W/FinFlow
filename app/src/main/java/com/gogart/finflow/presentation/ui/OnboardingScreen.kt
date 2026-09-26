@@ -45,7 +45,7 @@ data class OnboardingPage(
 )
 
 @Composable
-fun OnboardingScreen(viewModel: SettingsViewModel) {
+fun OnboardingScreen(viewModel: SettingsViewModel, onFinished: () -> Unit) {
     val pages = listOf(
         OnboardingPage(R.string.onboarding_title_1, R.string.onboarding_desc_1, Icons.Default.AccountBalanceWallet),
         OnboardingPage(R.string.onboarding_title_2, R.string.onboarding_desc_2, Icons.Default.BarChart),
@@ -135,7 +135,10 @@ fun OnboardingScreen(viewModel: SettingsViewModel) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = { viewModel.completeOnboarding() }) {
+                TextButton(onClick = { 
+                    viewModel.completeOnboarding() 
+                    onFinished()
+                }) {
                     Text(stringResource(R.string.onboarding_skip), style = MaterialTheme.typography.labelLarge)
                 }
 
@@ -147,6 +150,7 @@ fun OnboardingScreen(viewModel: SettingsViewModel) {
                             }
                         } else {
                             viewModel.completeOnboarding()
+                            onFinished()
                         }
                     }
                 ) {

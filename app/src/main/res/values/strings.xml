@@ -99,4 +99,8 @@
     <string name="import_confirm_warning">Існуючі дані будуть доповнені новими. Ви впевнені, що хочете продовжити?</string>
     <string name="import_btn">Імпортувати</string>
     <string name="remove_pin">Видалити PIN</string>
+
+    <!-- Notifications -->
+    <string name="notifications_disabled_msg">Нотифікації вимкнені, дозволь в налаштуваннях системи</string>
+    <string name="enable_notifications_btn">Налаштування</string>
 </resources>

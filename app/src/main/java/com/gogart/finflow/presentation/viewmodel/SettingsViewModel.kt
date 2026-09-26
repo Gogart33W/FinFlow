@@ -20,6 +20,12 @@ enum class ThemeMode {
     SYSTEM, LIGHT, DARK
 }
 
+sealed class AuthState {
+    object Loading : AuthState()
+    object NeedsPin : AuthState()
+    object Authenticated : AuthState()
+}
+
 class SettingsViewModel(
     private val securityManager: SecurityManager,
     private val backupManager: BackupManager
@@ -64,8 +70,8 @@ class SettingsViewModel(
     private val _messageEvent = MutableSharedFlow<String>()
     val messageEvent: SharedFlow<String> = _messageEvent
 
-    private val _isAuthenticated = MutableStateFlow(false)
-    val isAuthenticated: StateFlow<Boolean> = _isAuthenticated
+    private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
+    val authState: StateFlow<AuthState> = _authState
 
     private val _backupDataPreview = MutableStateFlow<BackupData?>(null)
     val backupDataPreview: StateFlow<BackupData?> = _backupDataPreview
@@ -73,9 +79,7 @@ class SettingsViewModel(
     init {
         viewModelScope.launch {
             securityManager.isPinSet.collect { hasPin ->
-                if (!hasPin) {
-                    _isAuthenticated.value = true
-                }
+                _authState.value = if (hasPin) AuthState.NeedsPin else AuthState.Authenticated
             }
         }
     }
@@ -108,7 +112,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             securityManager.setPin(pin)
             if (pin == null) {
-                _isAuthenticated.value = true
+                _authState.value = AuthState.Authenticated
                 _messageEvent.emit("pin_removed")
             } else {
                 _messageEvent.emit("pin_saved")
@@ -121,7 +125,7 @@ class SettingsViewModel(
             securityManager.validatePin(
                 pin = pin,
                 onSuccess = {
-                    _isAuthenticated.value = true
+                    _authState.value = AuthState.Authenticated
                 },
                 onError = {
                     viewModelScope.launch {

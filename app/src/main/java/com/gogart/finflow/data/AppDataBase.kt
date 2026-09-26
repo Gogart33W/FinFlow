@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [TransactionEntity::class, CategoryEntity::class, AccountEntity::class, BudgetEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 abstract class AppDataBase : RoomDatabase() {
@@ -160,6 +160,12 @@ abstract class AppDataBase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `accounts` ADD COLUMN `currency` TEXT NOT NULL DEFAULT 'UAH'")
+            }
+        }
+
         val DEFAULT_CATEGORIES = listOf(
             CategoryEntity(name = "Зарплата", iconName = "Work", colorHex = "#4CAF50", isIncome = true, isDefault = true),
             CategoryEntity(name = "Фріланс", iconName = "Laptop", colorHex = "#2196F3", isIncome = true),
@@ -183,7 +189,8 @@ abstract class AppDataBase : RoomDatabase() {
             type = AccountType.CASH,
             initialBalance = 0.0,
             colorHex = "#4CAF50",
-            isDefault = true
+            isDefault = true,
+            currency = "UAH"
         )
 
         fun getDatabase(context: Context): AppDataBase {
@@ -193,7 +200,7 @@ abstract class AppDataBase : RoomDatabase() {
                     AppDataBase::class.java,
                     "finflow_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .addCallback(object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)

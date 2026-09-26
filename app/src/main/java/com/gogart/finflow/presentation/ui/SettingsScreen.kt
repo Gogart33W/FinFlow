@@ -164,8 +164,9 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     Spacer(modifier = Modifier.height(Spacing.m))
                     
                     val currentLocales = AppCompatDelegate.getApplicationLocales()
-                    val currentLanguage = currentLocales.toLanguageTags().let { 
-                        if (it.contains("uk")) 0 else 1 
+                    val sysContext = LocalContext.current
+                    var currentLanguage by remember { 
+                        mutableStateOf(currentLocales.toLanguageTags().let { if (it.contains("uk")) 0 else 1 })
                     }
 
                     SingleChoiceSegmentedButtonRow(
@@ -174,7 +175,9 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                         SegmentedButton(
                             selected = currentLanguage == 0,
                             onClick = {
+                                currentLanguage = 0
                                 AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("uk"))
+                                (sysContext as? androidx.activity.ComponentActivity)?.recreate()
                             },
                             shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
                         ) {
@@ -183,7 +186,9 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                         SegmentedButton(
                             selected = currentLanguage == 1,
                             onClick = {
+                                currentLanguage = 1
                                 AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("en"))
+                                (sysContext as? androidx.activity.ComponentActivity)?.recreate()
                             },
                             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
                         ) {

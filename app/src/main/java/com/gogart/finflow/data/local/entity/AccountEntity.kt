@@ -11,5 +11,6 @@ data class AccountEntity(
     val type: AccountType,
     val initialBalance: Double = 0.0,
     val colorHex: String = "#2196F3",
-    val isDefault: Boolean = false
+    val isDefault: Boolean = false,
+    val currency: String = "UAH"
 )

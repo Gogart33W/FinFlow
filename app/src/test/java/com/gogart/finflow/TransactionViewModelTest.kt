@@ -53,9 +53,9 @@ class TransactionViewModelTest {
         val fakeTransactionDao = createFakeTransactionDao(emptyList())
         val viewModel = createViewModel(fakeTransactionDao)
 
-        viewModel.totalBalance.test {
+        viewModel.balancesByCurrency.test {
             testDispatcher.scheduler.advanceUntilIdle()
-            assertEquals(0.0, awaitItem(), 0.01)
+            assertEquals(emptyMap<String, Double>(), awaitItem())
         }
         viewModel.totalIncome.test {
             testDispatcher.scheduler.advanceUntilIdle()
@@ -87,10 +87,11 @@ class TransactionViewModelTest {
             testDispatcher.scheduler.advanceUntilIdle()
             assertEquals(0.0, awaitItem(), 0.01)
         }
-        viewModel.totalBalance.test {
+        viewModel.balancesByCurrency.test {
             testDispatcher.scheduler.advanceUntilIdle()
-            assertEquals(0.0, awaitItem(), 0.01)
-            assertEquals(1500.0, awaitItem(), 0.01)
+            assertEquals(emptyMap<String, Double>(), awaitItem())
+            val map = awaitItem()
+            assertEquals(1500.0, map["UAH"] ?: 0.0, 0.01)
         }
     }
 
@@ -121,10 +122,11 @@ class TransactionViewModelTest {
             assertEquals(0.0, awaitItem(), 0.01)
             assertEquals(300.0, awaitItem(), 0.01)
         }
-        viewModel.totalBalance.test {
+        viewModel.balancesByCurrency.test {
             testDispatcher.scheduler.advanceUntilIdle()
-            assertEquals(0.0, awaitItem(), 0.01)
-            assertEquals(700.0, awaitItem(), 0.01)
+            assertEquals(emptyMap<String, Double>(), awaitItem())
+            val map = awaitItem()
+            assertEquals(700.0, map["UAH"] ?: 0.0, 0.01)
         }
     }
 

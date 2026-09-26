@@ -43,6 +43,7 @@ class AccountViewModel(
         type: AccountType,
         initialBalance: Double,
         colorHex: String,
+        currency: String,
         isDefault: Boolean = false
     ) {
         viewModelScope.launch {
@@ -51,7 +52,8 @@ class AccountViewModel(
                 type = type,
                 initialBalance = initialBalance,
                 colorHex = colorHex,
-                isDefault = isDefault
+                isDefault = isDefault,
+                currency = currency
             )
             repository.insertAccount(account)
         }
